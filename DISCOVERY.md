@@ -81,32 +81,32 @@ BaseEvent, TextMessageStartEvent, TextMessageContentEvent, ...
 
 ### 3.2 Agent & State Hooks → Composables
 
-| React hook                                             | Vue composable               | Key implementation detail                                                                                            |
-| ------------------------------------------------------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `useAgent({ agentId, threadId, updates, throttleMs })` | `useAgent(...)`              | Wraps `CopilotKitCore.subscribeToAgentWithOptions()` with `watchEffect` + `shallowRef`; batches via `queueMicrotask` |
-| `useAgentContext(input)`                               | `useAgentContext(input)`     | Registers component state in agent context store                                                                     |
-| `useCoAgent(options)`                                  | `useCoAgent(options)`        | Legacy v1 composable — thin wrapper over `useAgent`                                                                  |
-| `useCoAgentStateRender(...)`                           | `useCoAgentStateRender(...)` | Registers a render function for agent state                                                                          |
+| React hook                                    | Vue composable               | Key implementation detail                                                                   |
+| --------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------- |
+| `useAgent({ agentId, threadId, throttleMs })` | `useAgent(...)`              | Subscribes through `CopilotKitCore` and keeps `messages`, `state`, and `isRunning` reactive |
+| `useAgentContext(input)`                      | `useAgentContext(input)`     | Registers component state in agent context store                                            |
+| `useCoAgent(options)`                         | `useCoAgent(options)`        | Legacy v1 composable — thin wrapper over `useAgent`                                         |
+| `useCoAgentStateRender(...)`                  | `useCoAgentStateRender(...)` | Registers a render function for agent state                                                 |
 
 ### 3.3 Tool Hooks → Composables
 
-| React hook                             | Vue composable                    | Key implementation detail                                           |
-| -------------------------------------- | --------------------------------- | ------------------------------------------------------------------- |
-| `useFrontendTool(name, handler, deps)` | `useFrontendTool(name, handler)`  | Registers tool in `CopilotKitCore`; unregisters on `onUnmounted`    |
-| `useRenderToolCall(name, render)`      | `useRenderToolCall(name, render)` | Maps tool call → Vue component via `defineComponent` slot/render fn |
-| `useRenderTool(name, options)`         | `useRenderTool(name, options)`    | v2 version; supports streaming states (running/complete)            |
-| `useDefaultRenderTool()`               | `useDefaultRenderTool()`          | Fallback renderer for unhandled tool calls                          |
-| `useHumanInTheLoop(options)`           | `useHumanInTheLoop(options)`      | Registers interrupt handler; resolves via `Promise`                 |
-| `useInterrupt(config)`                 | `useInterrupt(config)`            | v2 interrupt hook                                                   |
-| `useLangGraphInterrupt()`              | `useLangGraphInterrupt()`         | LangGraph-specific interrupt composable                             |
-| `useComponent(name, component)`        | `useComponent(name, component)`   | Registers a named Vue component in the agent's component registry   |
+| React hook                        | Vue composable                    | Key implementation detail                                                           |
+| --------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------- |
+| `useFrontendTool(tool, deps)`     | `useFrontendTool(tool, deps)`     | Registers a frontend tool object; re-registers when the tool or watched deps change |
+| `useRenderToolCall(name, render)` | `useRenderToolCall(name, render)` | Maps tool call → Vue component via `defineComponent` slot/render fn                 |
+| `useRenderTool(name, options)`    | `useRenderTool(name, options)`    | v2 version; supports streaming states (running/complete)                            |
+| `useDefaultRenderTool()`          | `useDefaultRenderTool()`          | Fallback renderer for unhandled tool calls                                          |
+| `useHumanInTheLoop(options)`      | `useHumanInTheLoop(options)`      | Registers interrupt handler; resolves via `Promise`                                 |
+| `useInterrupt(config)`            | `useInterrupt(config)`            | v2 interrupt hook                                                                   |
+| `useLangGraphInterrupt()`         | `useLangGraphInterrupt()`         | LangGraph-specific interrupt composable                                             |
+| `useComponent(name, component)`   | `useComponent(name, component)`   | Registers a named Vue component in the agent's component registry                   |
 
 ### 3.4 Chat Hooks → Composables
 
 | React hook                          | Vue composable                      | Key implementation detail                                                              |
 | ----------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------- |
 | `useCopilotChat(options)`           | `useCopilotChat(options)`           | Returns `{ messages, sendMessage, reload, stop, isLoading }` — uses `ref` / `computed` |
-| `useCopilotChatHeadless_c(options)` | `useCopilotChatHeadless(options)`   | Headless (no UI dependency) chat composable                                            |
+| `useCopilotChatHeadless(options)`   | `useCopilotChatHeadless(options)`   | Headless (no UI dependency) chat composable                                            |
 | `useCopilotChatSuggestions(config)` | `useCopilotChatSuggestions(config)` | Suggestion configuration composable                                                    |
 | `useSuggestions(config)`            | `useSuggestions(config)`            | v2 suggestions composable                                                              |
 | `useConfigureSuggestions(config)`   | `useConfigureSuggestions(config)`   | Configure global suggestions                                                           |
@@ -155,7 +155,6 @@ BaseEvent, TextMessageStartEvent, TextMessageContentEvent, ...
 | `WildcardToolCallRender`        | `WildcardToolCallRender.vue`        | Catch-all tool-call renderer                      |
 | `CopilotKitInspector`           | `CopilotKitInspector.vue`           | Dev-mode inspector overlay                        |
 | `MCPAppsActivityRenderer`       | `MCPAppsActivityRenderer.vue`       | Renders MCP app activity messages                 |
-| (legacy) `CopilotKit` (v1)      | `CopilotKit.vue`                    | Thin alias for `CopilotKitProvider`               |
 
 ### 3.8 Generative UI (A2UI / Open Generative UI)
 

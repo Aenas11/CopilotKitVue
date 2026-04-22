@@ -19,7 +19,9 @@ copilotkit-vue/
 ├── packages/
 │   └── vue/               # @copilotkit/vue — the published Vue package
 ├── examples/
-│   └── vue-demo/          # minimal example app
+│   ├── basic/             # basic chat example
+│   ├── composables/       # fully composable chat example
+│   └── sidebar/           # sidebar chat example
 ├── scripts/
 │   └── sync-react-exports.ts   # upstream drift detector
 ├── copilotkit-src/        # git submodule → upstream CopilotKit repo (read-only reference)
