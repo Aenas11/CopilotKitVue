@@ -1,0 +1,4 @@
+[submodule "copilotkit-src"]
+	path = copilotkit-src
+	url = https://github.com/CopilotKit/CopilotKit.git
+	shallow = true

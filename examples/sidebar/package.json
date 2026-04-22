@@ -1,0 +1,28 @@
+{
+  "name": "@copilotkit/example-sidebar",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:ui\" \"npm run dev:runtime\" \"npm run dev:agent\" --names ui,runtime,agent --prefix-colors blue,magenta,green --kill-others",
+    "dev:agent": "node ../scripts/runner.js run-agent",
+    "dev:runtime": "node runtime-server.mjs",
+    "dev:ui": "wait-on tcp:127.0.0.1:4000 tcp:127.0.0.1:8000 && vite --port 5174",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ag-ui/client": "^0.0.52",
+    "@copilotkit/runtime": "^1.56.2",
+    "@copilotkit/vue": "workspace:*",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.3",
+    "concurrently": "^9.1.2",
+    "typescript": "^5.2.3",
+    "vite": "^6.0.0",
+    "wait-on": "^8.0.3",
+    "vue-tsc": "^2.2.10"
+  }
+}

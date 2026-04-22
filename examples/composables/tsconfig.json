@@ -1,0 +1,20 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "baseUrl": "./",
+        "moduleResolution": "bundler",
+        "noEmit": true,
+        "paths": {
+            "@copilotkit/vue": [
+                "../../packages/vue/src/index.ts"
+            ],
+            "@copilotkit/vue/styles": [
+                "../../packages/vue/src/styles/index.css"
+            ]
+        }
+    },
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.vue"
+    ]
+}
