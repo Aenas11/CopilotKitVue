@@ -69,16 +69,27 @@ onMounted(() => scrollToBottom("instant"));
     <!-- optional header slot -->
     <slot name="header" />
 
-    <!-- scrollable message area -->
-    <div ref="scrollRef" class="cpk-chat-view__messages" @scroll="handleScroll">
-      <!-- empty state -->
-      <div v-if="!messages.length && !isRunning" class="cpk-chat-view__empty">
-        <slot name="empty">
-          <p class="cpk-chat-view__empty-text">How can I help you today?</p>
-        </slot>
+    <!-- scrollable message area (position:relative for the scroll-down btn) -->
+    <div class="cpk-chat-view__scroll-wrapper">
+      <div ref="scrollRef" class="cpk-chat-view__messages" @scroll="handleScroll">
+        <!-- empty state -->
+        <div v-if="!messages.length && !isRunning" class="cpk-chat-view__empty">
+          <slot name="empty">
+            <p class="cpk-chat-view__empty-text">How can I help you today?</p>
+          </slot>
+        </div>
+
+        <CopilotChatMessageView :messages="messages" :is-running="isRunning" />
       </div>
 
-      <CopilotChatMessageView :messages="messages" :is-running="isRunning" />
+      <!-- scroll-to-bottom button -->
+      <button v-if="!atBottom" type="button" class="cpk-scroll-bottom" aria-label="Scroll to bottom"
+        @click="scrollToBottom('smooth')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
     </div>
 
     <!-- suggestion pills -->

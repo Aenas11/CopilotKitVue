@@ -29,7 +29,7 @@
   },
   "scripts": {
     "build": "tsdown && pnpm run build:dts",
-    "build:dts": "vue-tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build:dts": "node -e \"const fs=require('fs'); try{fs.unlinkSync('tsconfig.tsbuildinfo')}catch(e){}\" && vue-tsc --declaration --emitDeclarationOnly --outDir dist",
     "dev": "tsdown --watch",
     "prepublishOnly": "pnpm build",
     "test": "vitest run",

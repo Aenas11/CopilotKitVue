@@ -7,6 +7,7 @@
 import { computed, ref } from "vue";
 import MarkdownIt from "markdown-it";
 import type { AssistantMessage, Message } from "@ag-ui/core";
+import CopilotChatToolCallsView from "./CopilotChatToolCallsView.vue";
 
 const md = new MarkdownIt({ html: false, linkify: true, typographer: true });
 
@@ -32,6 +33,18 @@ const renderedContent = computed(() =>
   md.render(props.message.content ?? ""),
 );
 
+const isLatestMessage = computed(
+  () => props.messages[props.messages.length - 1]?.id === props.message.id,
+);
+
+// Mirror React: don't show toolbar on the currently-streaming latest message
+const shouldShowToolbar = computed(
+  () =>
+    props.toolbarVisible &&
+    !!(props.message.content?.trim()) &&
+    !(props.isRunning && isLatestMessage.value),
+);
+
 async function copyContent() {
   try {
     await navigator.clipboard.writeText(props.message.content ?? "");
@@ -45,15 +58,17 @@ async function copyContent() {
 
 <template>
   <div data-copilotkit class="cpk-message cpk-message--assistant">
-    <!-- streaming indicator -->
-    <span v-if="isRunning && messages[messages.length - 1]?.id === message.id && !message.content"
-      class="cpk-message__thinking" />
+    <!-- streaming indicator when no content yet -->
+    <span v-if="isRunning && isLatestMessage && !message.content" class="cpk-message__thinking" />
 
     <!-- rendered markdown -->
     <div v-else class="cpk-message__content cpk-prose" v-html="renderedContent" />
 
-    <!-- toolbar -->
-    <div v-if="toolbarVisible && message.content" class="cpk-message__toolbar">
+    <!-- tool calls (badge list) -->
+    <CopilotChatToolCallsView :message="message" :messages="messages" />
+
+    <!-- toolbar: copy / thumbs / regenerate (hidden on streaming latest) -->
+    <div v-if="shouldShowToolbar" class="cpk-message__toolbar">
       <button class="cpk-btn-icon" type="button" :title="copied ? 'Copied!' : 'Copy'"
         :aria-label="copied ? 'Copied!' : 'Copy message'" @click="copyContent">
         <svg v-if="!copied" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
