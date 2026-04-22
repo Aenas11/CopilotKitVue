@@ -5,7 +5,7 @@
     "build": "pnpm -r --filter './packages/**' run build",
     "dev": "pnpm -r --filter './packages/**' run dev",
     "test": "pnpm -r --filter './packages/**' run test",
-    "check-types": "pnpm -r --filter './packages/**' run check-types",
+    "check-types": "pnpm -r --filter './packages/**' run check-types && pnpm --filter copilotkit-vue run check:styles",
     "lint": "oxlint .",
     "format": "oxfmt --write .",
     "sync:upstream": "git submodule update --remote copilotkit-src && pnpm run sync:report",

@@ -99,6 +99,21 @@ pnpm test           # run all tests
 pnpm run sync:report  # check API drift against upstream React package
 ```
 
+### Styles source of truth (Vue package)
+
+- Canonical stylesheet: `packages/vue/src/styles/index.css`
+- Published stylesheet: `packages/vue/styles/index.css` (generated from source)
+
+The Vue package includes two scripts to keep these files aligned:
+
+```bash
+cd packages/vue
+pnpm run sync:styles   # copy src/styles/index.css -> styles/index.css
+pnpm run check:styles  # fail if the two files are out of sync
+```
+
+`pnpm build` in `packages/vue` automatically runs `sync:styles` before bundling.
+
 ---
 
 ## License

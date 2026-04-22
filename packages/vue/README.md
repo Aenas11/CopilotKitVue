@@ -76,6 +76,20 @@ Import the base stylesheet alongside your component usage:
 import "copilotkit-vue/styles";
 ```
 
+### Style source of truth
+
+- Edit source styles in `src/styles/index.css`
+- `styles/index.css` is the published output file
+
+Sync/check commands:
+
+```bash
+pnpm run sync:styles   # copy src/styles/index.css -> styles/index.css
+pnpm run check:styles  # fail if files are out of sync
+```
+
+`pnpm build` runs `sync:styles` automatically before packaging.
+
 ---
 
 ## Examples

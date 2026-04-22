@@ -7,11 +7,11 @@ export default defineConfig({
     resolve: {
         alias: [
             {
-                find: /^@copilotkit\/vue\/styles$/,
+                find: /^copilotkit-vue\/styles$/,
                 replacement: fileURLToPath(new URL("../../packages/vue/src/styles/index.css", import.meta.url)),
             },
             {
-                find: /^@copilotkit\/vue$/,
+                find: /^copilotkit-vue$/,
                 replacement: fileURLToPath(new URL("../../packages/vue/src/index.ts", import.meta.url)),
             },
         ],

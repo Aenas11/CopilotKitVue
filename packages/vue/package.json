@@ -28,7 +28,9 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsdown && pnpm run build:dts",
+    "sync:styles": "node ./scripts/sync-styles.mjs",
+    "check:styles": "node ./scripts/check-styles-sync.mjs",
+    "build": "pnpm run sync:styles && tsdown && pnpm run build:dts",
     "build:dts": "node -e \"const fs=require('fs'); try{fs.unlinkSync('tsconfig.tsbuildinfo')}catch(e){}\" && vue-tsc --declaration --emitDeclarationOnly --outDir dist",
     "dev": "tsdown --watch",
     "prepublishOnly": "pnpm build",
