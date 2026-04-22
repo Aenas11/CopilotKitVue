@@ -1,5 +1,5 @@
 import { createApp, defineComponent, h } from "vue";
-import { CopilotKitProvider } from "@copilotkit/vue";
+import { CopilotKitProvider } from "copilotkit-vue";
 import App from "./App.vue";
 
 /**

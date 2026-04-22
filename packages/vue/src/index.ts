@@ -1,8 +1,8 @@
 /**
- * @copilotkit/vue — public barrel export
+ * copilotkit-vue — public barrel export
  *
  * Import everything from this single entry point:
- *   import { CopilotKitProvider, useAgent, CopilotChat } from '@copilotkit/vue'
+ *   import { CopilotKitProvider, useAgent, CopilotChat } from 'copilotkit-vue'
  *
  * Type-only re-exports from @copilotkit/core and @copilotkit/shared are
  * included so consumers don't need to add those as direct dependencies.

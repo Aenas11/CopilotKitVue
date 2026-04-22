@@ -5,10 +5,10 @@
         "moduleResolution": "bundler",
         "noEmit": true,
         "paths": {
-            "@copilotkit/vue": [
+            "copilotkit-vue": [
                 "../../packages/vue/src/index.ts"
             ],
-            "@copilotkit/vue/styles": [
+            "copilotkit-vue/styles": [
                 "../../packages/vue/src/styles/index.css"
             ]
         }

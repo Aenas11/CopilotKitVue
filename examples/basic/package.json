@@ -14,7 +14,7 @@
   "dependencies": {
     "@ag-ui/client": "^0.0.52",
     "@copilotkit/runtime": "^1.56.2",
-    "@copilotkit/vue": "workspace:*",
+    "copilotkit-vue": "workspace:*",
     "openai": "^5.12.0",
     "vue": "^3.4.0"
   },

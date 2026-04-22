@@ -8,7 +8,7 @@ Vue 3 native bindings for [CopilotKit](https://github.com/CopilotKit/CopilotKit)
 
 ## What this is
 
-`@copilotkit/vue` exposes the full CopilotKit feature set to Vue 3 developers via idiomatic Vue composables and Single File Components (SFCs). It reuses the framework-agnostic `@copilotkit/core` and `@copilotkit/shared` packages and does **not** bundle React.
+`copilotkit-vue` exposes the full CopilotKit feature set to Vue 3 developers via idiomatic Vue composables and Single File Components (SFCs). It reuses the framework-agnostic `@copilotkit/core` and `@copilotkit/shared` packages and does **not** bundle React.
 
 ---
 
@@ -17,7 +17,7 @@ Vue 3 native bindings for [CopilotKit](https://github.com/CopilotKit/CopilotKit)
 ```
 copilotkit-vue/
 ├── packages/
-│   └── vue/               # @copilotkit/vue — the published Vue package
+│   └── vue/               # copilotkit-vue — the published Vue package
 ├── examples/
 │   ├── basic/             # basic chat example
 │   ├── composables/       # fully composable chat example
@@ -71,12 +71,12 @@ git commit -m "chore: bump copilotkit-src to vX.Y.Z"
 ## Quick start (once published)
 
 ```bash
-pnpm add @copilotkit/vue
+pnpm add copilotkit-vue
 ```
 
 ```vue
 <script setup lang="ts">
-import { CopilotKitProvider, useAgent, CopilotChat } from "@copilotkit/vue";
+import { CopilotKitProvider, useAgent, CopilotChat } from "copilotkit-vue";
 
 const { agent } = useAgent({ agentId: "my_agent" });
 </script>

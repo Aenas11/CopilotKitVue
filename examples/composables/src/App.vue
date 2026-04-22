@@ -16,8 +16,8 @@ import {
     useCopilotChat,
     useAgentContext,
     useFrontendTool,
-} from "@copilotkit/vue";
-import "@copilotkit/vue/styles";
+} from "copilotkit-vue";
+import "copilotkit-vue/styles";
 
 // ── App state the AI should be aware of ──────────────────────────────────────
 const currentPage = ref("Dashboard");

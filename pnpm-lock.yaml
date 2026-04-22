@@ -35,7 +35,7 @@ importers:
       '@copilotkit/runtime':
         specifier: ^1.56.2
         version: 1.56.2(@cfworker/json-schema@4.1.1)(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(ws@8.20.0))(@langchain/langgraph-sdk@1.8.9(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(ws@8.20.0))(vue@3.5.32(typescript@5.9.3)))(@opentelemetry/api@1.9.0)(langchain@1.3.3(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(ws@8.20.0))(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(vue@3.5.32(typescript@5.9.3))(ws@8.20.0)(zod-to-json-schema@3.25.2(zod@3.25.76)))(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(vue@3.5.32(typescript@5.9.3))(zod-to-json-schema@3.25.2(zod@3.25.76))
-      '@copilotkit/vue':
+      copilotkit-vue:
         specifier: workspace:*
         version: link:../../packages/vue
       openai:
@@ -72,7 +72,7 @@ importers:
       '@copilotkit/runtime':
         specifier: ^1.56.2
         version: 1.56.2(@cfworker/json-schema@4.1.1)(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(ws@8.20.0))(@langchain/langgraph-sdk@1.8.9(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(ws@8.20.0))(vue@3.5.32(typescript@5.9.3)))(@opentelemetry/api@1.9.0)(langchain@1.3.3(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(ws@8.20.0))(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(vue@3.5.32(typescript@5.9.3))(ws@8.20.0)(zod-to-json-schema@3.25.2(zod@3.25.76)))(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(vue@3.5.32(typescript@5.9.3))(zod-to-json-schema@3.25.2(zod@3.25.76))
-      '@copilotkit/vue':
+      copilotkit-vue:
         specifier: workspace:*
         version: link:../../packages/vue
       vue:
@@ -109,7 +109,7 @@ importers:
       '@copilotkit/runtime':
         specifier: ^1.56.2
         version: 1.56.2(@cfworker/json-schema@4.1.1)(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(ws@8.20.0))(@langchain/langgraph-sdk@1.8.9(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(ws@8.20.0))(vue@3.5.32(typescript@5.9.3)))(@opentelemetry/api@1.9.0)(langchain@1.3.3(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(ws@8.20.0))(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(vue@3.5.32(typescript@5.9.3))(ws@8.20.0)(zod-to-json-schema@3.25.2(zod@3.25.76)))(openai@5.23.2(ws@8.20.0)(zod@3.25.76))(vue@3.5.32(typescript@5.9.3))(zod-to-json-schema@3.25.2(zod@3.25.76))
-      '@copilotkit/vue':
+      copilotkit-vue:
         specifier: workspace:*
         version: link:../../packages/vue
       vue:

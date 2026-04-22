@@ -1,0 +1,10 @@
+src/
+*.test.*
+*.spec.*
+tsconfig.json
+tsdown.config.ts
+vitest.config.*
+coverage/
+node_modules/
+*.log
+*.tgz

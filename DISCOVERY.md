@@ -224,7 +224,7 @@ lucide-react      → lucide-vue-next
 
 ```
 packages/vue/
-├── package.json                   # @copilotkit/vue — peer: vue ^3.4
+├── package.json                   # copilotkit-vue — peer: vue ^3.4
 ├── tsconfig.json
 ├── tsdown.config.ts
 ├── src/

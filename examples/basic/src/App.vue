@@ -8,8 +8,8 @@
  *
  * ▸ Run with:  pnpm --filter @copilotkit/example-basic dev
  */
-import { CopilotKitProvider, CopilotChat } from "@copilotkit/vue";
-import "@copilotkit/vue/styles";
+import { CopilotKitProvider, CopilotChat } from "copilotkit-vue";
+import "copilotkit-vue/styles";
 
 const runtimeUrl =
     import.meta.env.VITE_COPILOTKIT_RUNTIME_URL ?? "/api/copilotkit";

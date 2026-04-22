@@ -1,5 +1,5 @@
 {
-  "name": "@copilotkit/vue",
+  "name": "copilotkit-vue",
   "version": "0.1.0",
   "description": "Vue 3 native bindings for CopilotKit",
   "license": "MIT",
@@ -24,10 +24,14 @@
     "dist",
     "styles"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsdown && pnpm run build:dts",
     "build:dts": "vue-tsc --declaration --emitDeclarationOnly --outDir dist",
     "dev": "tsdown --watch",
+    "prepublishOnly": "pnpm build",
     "test": "vitest run",
     "check-types": "vue-tsc --noEmit"
   },

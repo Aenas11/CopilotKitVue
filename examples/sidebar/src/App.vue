@@ -16,8 +16,8 @@ import {
     CopilotKitProvider,
     CopilotSidebar,
     CopilotPopup,
-} from "@copilotkit/vue";
-import "@copilotkit/vue/styles";
+} from "copilotkit-vue";
+import "copilotkit-vue/styles";
 
 const runtimeUrl =
     import.meta.env.VITE_COPILOTKIT_RUNTIME_URL ?? "/api/copilotkit";
