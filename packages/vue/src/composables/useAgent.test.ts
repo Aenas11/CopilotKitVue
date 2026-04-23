@@ -52,6 +52,7 @@ import {
     CopilotKitCoreRuntimeConnectionStatus,
     ProxiedCopilotRuntimeAgent,
 } from "@copilotkit/core";
+import { DEFAULT_AGENT_ID } from "@copilotkit/shared";
 
 type SubscriptionHandlers = {
     onAgentsChanged?: () => void;
@@ -353,5 +354,75 @@ describe("useAgent", () => {
         expect(firstResolved).toBe(cloned);
         expect(secondResolved).toBe(firstResolved);
         expect((secondResolved as MockAgent | null)?.threadId).toBe("thread-1");
+    });
+
+    it("uses DEFAULT_AGENT_ID when agentId option is omitted", () => {
+        const existing = createMockAgent(DEFAULT_AGENT_ID);
+        const getAgent = vi.fn((id: string) => (id === DEFAULT_AGENT_ID ? existing : null));
+
+        mockUseCopilotKit.mockReturnValue({
+            copilotkit: {
+                getAgent,
+                subscribe: vi.fn(() => ({ unsubscribe: vi.fn() })),
+                headers: {},
+                runtimeUrl: undefined,
+                runtimeTransport: undefined,
+                runtimeConnectionStatus: CopilotKitCoreRuntimeConnectionStatus.Connected,
+            },
+            threadId: undefined,
+        });
+
+        const { result } = mountUseAgent();
+
+        expect(getAgent).toHaveBeenCalledWith(DEFAULT_AGENT_ID);
+        expect(result.agent.value).toBe(existing);
+    });
+
+    it("prefers chat configuration threadId over provider threadId", () => {
+        const existing = createMockAgent("threaded-agent");
+        const cloned = createMockAgent("threaded-agent");
+        existing.clone = vi.fn(() => cloned);
+
+        mockUseCopilotChatConfiguration.mockReturnValue({ threadId: "chat-thread" });
+        mockUseCopilotKit.mockReturnValue({
+            copilotkit: {
+                getAgent: vi.fn(() => existing),
+                subscribe: vi.fn(() => ({ unsubscribe: vi.fn() })),
+                headers: {},
+                runtimeUrl: undefined,
+                runtimeTransport: undefined,
+                runtimeConnectionStatus: CopilotKitCoreRuntimeConnectionStatus.Connected,
+            },
+            threadId: "provider-thread",
+        });
+
+        const { result } = mountUseAgent({ agentId: "threaded-agent" });
+
+        expect(existing.clone).toHaveBeenCalledTimes(1);
+        expect((result.agent.value as MockAgent | null)?.threadId).toBe("chat-thread");
+    });
+
+    it("falls back to provider threadId when chat configuration has no threadId", () => {
+        const existing = createMockAgent("threaded-agent");
+        const cloned = createMockAgent("threaded-agent");
+        existing.clone = vi.fn(() => cloned);
+
+        mockUseCopilotChatConfiguration.mockReturnValue({});
+        mockUseCopilotKit.mockReturnValue({
+            copilotkit: {
+                getAgent: vi.fn(() => existing),
+                subscribe: vi.fn(() => ({ unsubscribe: vi.fn() })),
+                headers: {},
+                runtimeUrl: undefined,
+                runtimeTransport: undefined,
+                runtimeConnectionStatus: CopilotKitCoreRuntimeConnectionStatus.Connected,
+            },
+            threadId: "provider-thread",
+        });
+
+        const { result } = mountUseAgent({ agentId: "threaded-agent" });
+
+        expect(existing.clone).toHaveBeenCalledTimes(1);
+        expect((result.agent.value as MockAgent | null)?.threadId).toBe("provider-thread");
     });
 });
