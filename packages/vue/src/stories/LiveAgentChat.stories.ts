@@ -1,41 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/vue3-vite";
-import { defineComponent, provide } from "vue";
-import { CopilotKitCore } from "@copilotkit/core";
 import CopilotChat from "../components/chat/CopilotChat.vue";
 import CopilotSidebar from "../components/chat/CopilotSidebar.vue";
-import { CopilotKitKey, type CopilotKitContext } from "../providers/keys";
-
-const StoryRuntimeProvider = defineComponent({
-    name: "StoryRuntimeProvider",
-    props: {
-        runtimeUrl: {
-            type: String,
-            required: true,
-        },
-        threadId: {
-            type: String,
-            default: undefined,
-        },
-    },
-    setup(props, { slots }) {
-        const copilotkit = new CopilotKitCore({
-            runtimeUrl: props.runtimeUrl,
-            headers: undefined,
-            credentials: undefined,
-            properties: undefined,
-            agents__unsafe_dev_only: undefined,
-        });
-
-        const context: CopilotKitContext = {
-            copilotkit,
-            threadId: props.threadId,
-            defaultThrottleMs: undefined,
-        };
-
-        provide(CopilotKitKey, context);
-        return () => slots.default?.();
-    },
-});
+import { StoryRuntimeProvider } from "./liveAgentStoryShared";
 
 const meta = {
     title: "Workflows/Live Agent/Basics",

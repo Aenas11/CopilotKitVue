@@ -1,0 +1,23 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Workflows/Overview" />
+
+# Workflows
+
+Use the `Workflows` section for runtime-backed and agent-backed flows.
+
+| Area | What it answers | Current entries |
+| --- | --- | --- |
+| Live Agent | How the full stack behaves when Storybook proxies to the runtime and example agent | `Basics`, `Advanced Scenarios`, `Checklist` |
+
+## When to use this section
+
+- You need to verify behavior that depends on the runtime, live agent state, or tool side effects.
+- You are testing full user journeys instead of isolated UI states.
+- You want manual smoke coverage that mirrors real host-app integration.
+
+## Navigation guide
+
+- `Basics` covers the shortest live chat and sidebar smoke paths.
+- `Advanced Scenarios` is split into themed groups for state, threading, layouts, and tool rendering.
+- `Checklist` is the manual pass-fail guide for the live stack.

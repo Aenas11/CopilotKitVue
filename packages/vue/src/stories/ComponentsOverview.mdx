@@ -1,0 +1,22 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Components/Overview" />
+
+# Components
+
+Use the `Components` section for isolated UI contract stories.
+
+| Area | What it answers | Current entries |
+| --- | --- | --- |
+| Chat | How individual chat-facing components render and behave in stable conditions | `CopilotChatInput`, `CopilotChatView` |
+| Layout | How container shells open, size, and render child content | `Panel States` |
+
+## When to use this section
+
+- You are checking a single component in isolation.
+- You want deterministic `play` assertions that do not depend on a runtime or agent.
+- You are refining props, visual states, or interaction affordances before moving into broader scenarios.
+
+## Progression
+
+Start in `Components` for UI contract work, move to `Scenarios` for multi-step state coverage, then use `Workflows` for runtime-backed validation.

@@ -1,0 +1,21 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Scenarios/Overview" />
+
+# Scenarios
+
+Use the `Scenarios` section for deterministic, multi-step story coverage.
+
+| Area | What it answers | Current entries |
+| --- | --- | --- |
+| Deterministic | How chat surfaces behave across richer message states, suggestions, tool rendering, and reopen continuity without live services | `Complex Chat`, `Render Tool` |
+
+## When to use this section
+
+- You want broader interaction coverage than a single component story.
+- You still need stable, test-friendly stories for CI.
+- You are validating compositional UI states before involving the live runtime.
+
+## Progression
+
+If a deterministic scenario proves the UI shape and interaction model, promote only the highest-value checks to `Workflows`.

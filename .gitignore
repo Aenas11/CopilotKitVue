@@ -4,6 +4,8 @@ node_modules/
 
 # Build outputs
 dist/
+storybook-static/
+**/storybook-static/
 *.d.ts
 *.d.cts
 *.d.mts

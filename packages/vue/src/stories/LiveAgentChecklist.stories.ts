@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/vue3-vite";
 
 const meta = {
-  title: "Workflows/Live Agent/Checklist",
+    title: "Workflows/Live Agent/Checklist",
     tags: ["live-agent", "smoke", "autodocs"],
     parameters: {
         docs: {
@@ -44,7 +44,7 @@ pnpm storybook:dev</code></pre>
               <li>While running, verify Stop button appears and is actionable.</li>
               <li>Send a second prompt and verify thread continuity.</li>
               <li>Close and reopen panel (sidebar/popup) and verify UI state continuity.</li>
-              <li>Open <strong>Workflows/Live Agent/Advanced Scenarios</strong> and run <strong>Render Tool Live</strong>.</li>
+              <li>Open <strong>Workflows/Live Agent/Advanced Scenarios/Tool Rendering</strong> and run <strong>Render Tool Live</strong>.</li>
               <li>Ask: <em>"What is the storybook status?"</em> and confirm a custom tool renderer block appears in chat.</li>
               <li>Confirm no runtime or agent errors in terminal output.</li>
             </ol>

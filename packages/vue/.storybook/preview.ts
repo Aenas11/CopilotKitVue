@@ -8,11 +8,11 @@ const preview: Preview = {
             storySort: {
                 order: [
                     "Components",
-                    ["Chat", "Layout"],
+                    ["Overview", "Chat", "Layout"],
                     "Scenarios",
-                    ["Deterministic"],
+                    ["Overview", "Deterministic"],
                     "Workflows",
-                    ["Live Agent"],
+                    ["Overview", "Live Agent", ["Basics", "Advanced Scenarios", ["State and Tools", "Threads and Debugging", "Layout Patterns", "Tool Rendering"], "Checklist"]],
                 ],
             },
         },
