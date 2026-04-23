@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/vue3-vite";
 
 const meta = {
-    title: "Scenarios/Live Agent Checklist",
+  title: "Workflows/Live Agent/Checklist",
     tags: ["live-agent", "smoke", "autodocs"],
     parameters: {
         docs: {
@@ -39,12 +39,12 @@ pnpm storybook:dev</code></pre>
 
             <h3>Smoke Steps</h3>
             <ol>
-              <li>Open <strong>Scenarios/Live Agent Chat</strong> and select <strong>Copilot Chat Live</strong>.</li>
+              <li>Open <strong>Workflows/Live Agent/Basics</strong> and select <strong>Copilot Chat Live</strong>.</li>
               <li>Send a prompt and verify assistant response appears.</li>
               <li>While running, verify Stop button appears and is actionable.</li>
               <li>Send a second prompt and verify thread continuity.</li>
               <li>Close and reopen panel (sidebar/popup) and verify UI state continuity.</li>
-              <li>Open <strong>Scenarios/Advanced Agent Features</strong> and run <strong>Render Tool Live</strong>.</li>
+              <li>Open <strong>Workflows/Live Agent/Advanced Scenarios</strong> and run <strong>Render Tool Live</strong>.</li>
               <li>Ask: <em>"What is the storybook status?"</em> and confirm a custom tool renderer block appears in chat.</li>
               <li>Confirm no runtime or agent errors in terminal output.</li>
             </ol>

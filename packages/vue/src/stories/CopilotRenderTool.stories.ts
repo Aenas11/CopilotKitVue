@@ -126,7 +126,7 @@ const runningToolCallMessages: Message[] = [
 ];
 
 const meta = {
-    title: "Phase B/Render Tool",
+    title: "Scenarios/Deterministic/Render Tool",
     component: CopilotChatView,
     tags: ["test", "complex", "autodocs"],
     parameters: {

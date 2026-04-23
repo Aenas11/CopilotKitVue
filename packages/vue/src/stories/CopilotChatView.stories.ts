@@ -9,7 +9,7 @@ const messages: Message[] = [
 ];
 
 const meta = {
-    title: "Chat/CopilotChatView",
+    title: "Components/Chat/CopilotChatView",
     component: CopilotChatView,
     args: {
         messages,

@@ -269,7 +269,7 @@ pnpm --dir ./packages/vue run test:stories:live
 
 ### Manual Testing
 
-1. Navigate to **Scenarios > Advanced Agent Features**
+1. Navigate to **Workflows > Live Agent > Advanced Scenarios**
 2. Click on any story
 3. Interact with the chat interface
 4. Monitor network tab to see API calls
@@ -287,11 +287,12 @@ packages/vue/src/stories/LiveAgentAdvancedScenarios.stories.ts
 
 Along with:
 
-- `LiveAgentChat.stories.ts` — Basic live chat & sidebar
-- `CopilotChatComplexScenarios.stories.ts` — Deterministic test scenarios
-- `CopilotChatInput.stories.ts` — Input component stories
-- `CopilotChatView.stories.ts` — View component stories
-- `CopilotPanelStates.stories.ts` — Panel state variations
+- `LiveAgentChat.stories.ts` — Workflow basics for live chat and sidebar smoke tests
+- `CopilotChatComplexScenarios.stories.ts` — Deterministic scenario coverage
+- `CopilotRenderTool.stories.ts` — Deterministic render-tool coverage
+- `CopilotChatInput.stories.ts` — Component-level input stories
+- `CopilotChatView.stories.ts` — Component-level chat view stories
+- `CopilotPanelStates.stories.ts` — Component-level layout state variations
 
 ---
 

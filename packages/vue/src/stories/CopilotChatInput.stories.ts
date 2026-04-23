@@ -3,7 +3,7 @@ import { expect, userEvent, within } from "storybook/test";
 import CopilotChatInput from "../components/chat/CopilotChatInput.vue";
 
 const meta = {
-    title: "Chat/CopilotChatInput",
+    title: "Components/Chat/CopilotChatInput",
     component: CopilotChatInput,
     args: {
         placeholder: "Ask CopilotKit...",

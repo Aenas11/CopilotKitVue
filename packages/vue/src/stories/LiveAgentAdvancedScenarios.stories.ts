@@ -40,34 +40,34 @@ const StoryRuntimeProvider = defineComponent({
 });
 
 const meta = {
-    title: "Scenarios/Advanced Agent Features",
+  title: "Workflows/Live Agent/Advanced Scenarios",
     tags: ["live-agent", "advanced", "autodocs"],
-  decorators: [
-    (story, context) => {
-      const renderedStory = story();
-      const storyDescription = context.parameters?.docs?.description?.story;
-      const purposeText = typeof storyDescription === "string" ? storyDescription : "";
-      const showPurpose = context.viewMode === "story" && purposeText.length > 0;
+    decorators: [
+        (story, context) => {
+            const renderedStory = story();
+            const storyDescription = context.parameters?.docs?.description?.story;
+            const purposeText = typeof storyDescription === "string" ? storyDescription : "";
+            const showPurpose = context.viewMode === "story" && purposeText.length > 0;
 
-      return {
-        components: {
-          RenderedStory: renderedStory,
-        },
-        setup() {
+            return {
+                components: {
+                    RenderedStory: renderedStory,
+                },
+                setup() {
                     const dismissed = ref(false);
 
                     const dismiss = () => {
                         dismissed.value = true;
                     };
 
-          return {
-            showPurpose,
-            purposeText,
+                    return {
+                        showPurpose,
+                        purposeText,
                         dismissed,
                         dismiss,
-          };
-        },
-        template: `
+                    };
+                },
+                template: `
           <div style="position: relative;">
             <div
                         v-if="showPurpose && !dismissed"
@@ -89,9 +89,9 @@ const meta = {
             <RenderedStory />
           </div>
         `,
-      };
-    },
-  ],
+            };
+        },
+    ],
     parameters: {
         layout: "fullscreen",
         docs: {

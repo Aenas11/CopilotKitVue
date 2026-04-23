@@ -38,7 +38,7 @@ const StoryRuntimeProvider = defineComponent({
 });
 
 const meta = {
-    title: "Scenarios/Live Agent Chat",
+    title: "Workflows/Live Agent/Basics",
     tags: ["live-agent", "smoke", "autodocs"],
     parameters: {
         layout: "fullscreen",

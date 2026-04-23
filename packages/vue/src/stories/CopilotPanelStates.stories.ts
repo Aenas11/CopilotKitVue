@@ -5,7 +5,7 @@ import CopilotSidebarView from "../components/layout/CopilotSidebarView.vue";
 import CopilotPopupView from "../components/layout/CopilotPopupView.vue";
 
 const meta = {
-    title: "Layout/Panel States",
+    title: "Components/Layout/Panel States",
 } satisfies Meta;
 
 export default meta;

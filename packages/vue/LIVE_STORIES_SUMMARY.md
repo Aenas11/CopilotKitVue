@@ -27,9 +27,13 @@ Successfully created and verified **8 comprehensive live agent stories** showcas
 
 ```
 packages/vue/src/stories/
-├── LiveAgentAdvancedScenarios.stories.ts  [NEW] Main file with all 8 stories
-├── LiveAgentChat.stories.ts               [EXISTING] 2 basic live stories
-├── CopilotChatComplexScenarios.stories.ts [EXISTING] Deterministic scenario tests
+├── LiveAgentAdvancedScenarios.stories.ts  [NEW] Workflows > Live Agent > Advanced Scenarios
+├── LiveAgentChat.stories.ts               [EXISTING] Workflows > Live Agent > Basics
+├── CopilotChatComplexScenarios.stories.ts [EXISTING] Scenarios > Deterministic > Complex Chat
+├── CopilotRenderTool.stories.ts           [EXISTING] Scenarios > Deterministic > Render Tool
+├── CopilotChatInput.stories.ts            [EXISTING] Components > Chat > CopilotChatInput
+├── CopilotChatView.stories.ts             [EXISTING] Components > Chat > CopilotChatView
+├── CopilotPanelStates.stories.ts          [EXISTING] Components > Layout > Panel States
 ├── ADVANCED_SCENARIOS.md                  [NEW] Comprehensive documentation
 └── [other story files]
 ```
