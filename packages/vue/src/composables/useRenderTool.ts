@@ -1,9 +1,16 @@
-import { ref, onUnmounted } from "vue";
+import { onUnmounted, toValue, watch, type MaybeRefOrGetter } from "vue";
 import { useCopilotKit } from "./useCopilotKit";
+import {
+  removeToolCallRenderer,
+  upsertToolCallRenderer,
+  type ToolCallRenderFn,
+} from "../adapters/toolCallRenderRegistry";
 
 export interface UseRenderToolOptions {
   /** Tool name to intercept for rendering. */
   name: string;
+  /** Render function called with parsed args/result and status. */
+  render: ToolCallRenderFn;
   /** Optional agent ID scope. */
   agentId?: string;
 }
@@ -12,11 +19,37 @@ export interface UseRenderToolOptions {
  * Registers a Vue component as the renderer for a given tool call.
  * Mirrors the React `useRenderTool` hook.
  *
- * @todo Full implementation pending Phase B. Currently registers a
- *       placeholder renderer entry.
  */
-export function useRenderTool(_options: UseRenderToolOptions): void {
-  // Phase B: implement via copilotkit.addHookRenderToolCall
+export function useRenderTool(
+  options: MaybeRefOrGetter<UseRenderToolOptions>,
+  deps?: MaybeRefOrGetter<unknown>[],
+): void {
+  const { copilotkit } = useCopilotKit();
+  const extraDeps = deps ?? [];
+
+  watch(
+    [() => toValue(options), ...extraDeps.map((d) => () => toValue(d))],
+    ([resolved], [previous]) => {
+      const prev = previous as UseRenderToolOptions | undefined;
+      const next = resolved as UseRenderToolOptions;
+
+      if (prev) {
+        removeToolCallRenderer(copilotkit, prev.name, prev.agentId);
+      }
+
+      upsertToolCallRenderer(copilotkit, {
+        name: next.name,
+        agentId: next.agentId,
+        render: next.render,
+      });
+    },
+    { immediate: true },
+  );
+
+  onUnmounted(() => {
+    const resolved = toValue(options);
+    removeToolCallRenderer(copilotkit, resolved.name, resolved.agentId);
+  });
 }
 
 /**
@@ -28,8 +61,10 @@ export const useRenderToolCall = useRenderTool;
  * Mirrors the React `useDefaultRenderTool` hook.
  * Registers the fallback renderer for unhandled tool calls.
  *
- * @todo Full implementation pending Phase B.
  */
-export function useDefaultRenderTool(): void {
-  // Phase B
+export function useDefaultRenderTool(
+  render: ToolCallRenderFn,
+  agentId?: string,
+): void {
+  useRenderTool({ name: "*", render, agentId });
 }

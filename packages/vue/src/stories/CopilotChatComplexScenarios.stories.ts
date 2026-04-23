@@ -22,7 +22,7 @@ const streamingMessages: Message[] = [
 ];
 
 const meta = {
-    title: "Scenarios/Complex Chat",
+    title: "Scenarios/Deterministic/Complex Chat",
     component: CopilotChatView,
     tags: ["stable", "complex", "autodocs"],
 } satisfies Meta<typeof CopilotChatView>;

@@ -19,6 +19,7 @@ const props = withDefaults(
     loadingMessage?: string;
     emptyStateComponent?: boolean; // slot activator
     headerComponent?: boolean;
+    hideTextWhenCustomToolRendered?: boolean;
   }>(),
   {
     messages: () => [],
@@ -26,6 +27,7 @@ const props = withDefaults(
     suggestions: () => [],
     inputPlaceholder: "Ask me anything...",
     loadingMessage: "Thinking...",
+    hideTextWhenCustomToolRendered: true,
   },
 );
 
@@ -79,7 +81,8 @@ onMounted(() => scrollToBottom("instant"));
           </slot>
         </div>
 
-        <CopilotChatMessageView :messages="messages" :is-running="isRunning" />
+        <CopilotChatMessageView :messages="messages" :is-running="isRunning"
+          :hide-text-when-custom-tool-rendered="hideTextWhenCustomToolRendered" />
       </div>
 
       <!-- scroll-to-bottom button -->

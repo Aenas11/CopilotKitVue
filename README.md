@@ -10,6 +10,12 @@ Vue 3 native bindings for [CopilotKit](https://github.com/CopilotKit/CopilotKit)
 
 `copilotkit-vue` exposes the full CopilotKit feature set to Vue 3 developers via idiomatic Vue composables and Single File Components (SFCs). It reuses the framework-agnostic `@copilotkit/core` and `@copilotkit/shared` packages and does **not** bundle React.
 
+### Recent functionality highlights
+
+- Tool-rendered Generative UI in chat is supported via `useRenderTool`, `useComponent`, and built-in A2UI fallback rendering for `render_a2ui`.
+- Activity and custom message rendering parity APIs are available: `useRenderActivityMessage`, `useRenderCustomMessages`, and `createA2UIMessageRenderer`.
+- Human-in-the-loop and interrupt flows are available via `useHumanInTheLoop`, `useInterrupt`, and `useLangGraphInterrupt`.
+
 ---
 
 ## Repository structure

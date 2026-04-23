@@ -20,6 +20,27 @@
                 "uriFormat": "http://localhost:%s",
                 "action": "openExternally"
             }
+        },
+        //starts storybooks in debug mode from the vue package
+        {
+            "name": "Storybook: Vue",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/packages/vue",
+            "runtimeExecutable": "pnpm",
+            "runtimeArgs": [
+                "run",
+                "storybook"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "serverReadyAction": {
+                "pattern": "Storybook.*started on.*http://localhost:(\\d+)",
+                "uriFormat": "http://localhost:%s",
+                "action": "openExternally"
+            }
         }
     ]
 }

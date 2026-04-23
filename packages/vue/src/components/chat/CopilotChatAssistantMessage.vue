@@ -4,10 +4,12 @@
  * and an action toolbar (copy, thumbs up/down).
  * Mirrors the React CopilotChatAssistantMessage.
  */
-import { computed, ref } from "vue";
+import { computed, inject, ref } from "vue";
 import MarkdownIt from "markdown-it";
 import type { AssistantMessage, Message } from "@ag-ui/core";
 import CopilotChatToolCallsView from "./CopilotChatToolCallsView.vue";
+import { CopilotKitKey, CopilotChatConfigurationKey } from "../../providers/keys";
+import { getToolCallRenderer } from "../../adapters/toolCallRenderRegistry";
 
 const md = new MarkdownIt({ html: false, linkify: true, typographer: true });
 
@@ -17,8 +19,14 @@ const props = withDefaults(
     messages?: Message[];
     isRunning?: boolean;
     toolbarVisible?: boolean;
+    hideTextWhenCustomToolRendered?: boolean;
   }>(),
-  { messages: () => [], isRunning: false, toolbarVisible: true },
+  {
+    messages: () => [],
+    isRunning: false,
+    toolbarVisible: true,
+    hideTextWhenCustomToolRendered: true,
+  },
 );
 
 const emit = defineEmits<{
@@ -28,9 +36,28 @@ const emit = defineEmits<{
 }>();
 
 const copied = ref(false);
+const copilotKitContext = inject(CopilotKitKey, null);
+const chatConfig = inject(CopilotChatConfigurationKey, null);
 
 const renderedContent = computed(() =>
   md.render(props.message.content ?? ""),
+);
+
+const hasCustomToolContent = computed(() => {
+  if (!copilotKitContext || !props.message.toolCalls?.length) return false;
+  const agentId = chatConfig?.agentId;
+  return props.message.toolCalls.some((tc) => {
+    const name = tc.function?.name ?? tc.id;
+    return !!getToolCallRenderer(copilotKitContext.copilotkit, { name, agentId });
+  });
+});
+
+const shouldHideMarkdownForToolMessage = computed(
+  () => props.hideTextWhenCustomToolRendered && hasCustomToolContent.value,
+);
+
+const shouldRenderMarkdown = computed(
+  () => !shouldHideMarkdownForToolMessage.value && !!props.message.content,
 );
 
 const isLatestMessage = computed(
@@ -41,6 +68,7 @@ const isLatestMessage = computed(
 const shouldShowToolbar = computed(
   () =>
     props.toolbarVisible &&
+    !shouldHideMarkdownForToolMessage.value &&
     !!(props.message.content?.trim()) &&
     !(props.isRunning && isLatestMessage.value),
 );
@@ -62,10 +90,10 @@ async function copyContent() {
     <span v-if="isRunning && isLatestMessage && !message.content" class="cpk-message__thinking" />
 
     <!-- rendered markdown -->
-    <div v-else class="cpk-message__content cpk-prose" v-html="renderedContent" />
+    <div v-else-if="shouldRenderMarkdown" class="cpk-message__content cpk-prose" v-html="renderedContent" />
 
     <!-- tool calls (badge list) -->
-    <CopilotChatToolCallsView :message="message" :messages="messages" />
+    <CopilotChatToolCallsView :message="message" :messages="messages" :is-running="isRunning" />
 
     <!-- toolbar: copy / thumbs / regenerate (hidden on streaming latest) -->
     <div v-if="shouldShowToolbar" class="cpk-message__toolbar">

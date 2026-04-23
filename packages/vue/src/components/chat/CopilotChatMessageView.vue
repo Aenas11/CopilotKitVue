@@ -12,8 +12,13 @@ withDefaults(
   defineProps<{
     messages: Message[];
     isRunning?: boolean;
+    hideTextWhenCustomToolRendered?: boolean;
   }>(),
-  { messages: () => [], isRunning: false },
+  {
+    messages: () => [],
+    isRunning: false,
+    hideTextWhenCustomToolRendered: true,
+  },
 );
 </script>
 
@@ -21,7 +26,8 @@ withDefaults(
   <div class="cpk-message-list">
     <template v-for="message in messages" :key="message.id">
       <CopilotChatAssistantMessage v-if="message.role === 'assistant'" :message="(message as AssistantMessage)"
-        :messages="messages" :is-running="isRunning" />
+        :messages="messages" :is-running="isRunning"
+        :hide-text-when-custom-tool-rendered="hideTextWhenCustomToolRendered" />
       <CopilotChatUserMessage v-else-if="message.role === 'user'" :message="(message as UserMessage)" />
       <CopilotChatReasoningMessage v-else-if="message.role === 'reasoning'" :message="(message as ReasoningMessage)"
         :messages="messages" :is-running="isRunning" />

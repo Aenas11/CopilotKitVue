@@ -170,7 +170,7 @@ This split avoids intermittent `storybook/status` watcher shutdown errors during
 
 Live smoke checklist page in Storybook:
 
-- `Scenarios/Live Agent Checklist` (story file: `src/stories/LiveAgentChecklist.stories.ts`)
+- `Workflows/Live Agent/Checklist` (story file: `src/stories/LiveAgentChecklist.stories.ts`)
 
 ---
 
