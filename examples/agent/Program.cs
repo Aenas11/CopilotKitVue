@@ -79,7 +79,11 @@ public AIAgent CreateAzureHostedAgent(ConfigurationManager configurationManager)
             .AsAIAgent(
                 model: deploymentName,
                 name: "AGUIAssistant",
-                instructions: "You are a helpful assistant with access to restaurant information and frontend context. Use any provided context when answering questions about the current page, user, or app state.",         
+                instructions: "You are a helpful assistant with access to restaurant information and frontend context. Use any provided context when answering questions about the current page, user, or app state. " +
+                    "You may also have access to a frontend-provided tool named request_user_approval. " +
+                    "Before taking a sensitive or customer-affecting action such as issuing a refund, changing a plan, escalating a ticket, deleting records, or sending a message on the user's behalf, you must call request_user_approval first. " +
+                    "When you call it, provide a short plain-English message that describes the exact action and include concise context when it helps the operator decide. " +
+                    "If the tool returns approved=true, confirm in one short sentence that you will proceed. If approved=false, acknowledge that the action was not approved and include the reason when one is given.",         
                 tools: [
                     AIFunctionFactory.Create(
                         method: GetProverbs,

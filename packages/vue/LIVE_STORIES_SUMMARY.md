@@ -18,6 +18,7 @@ packages/vue/src/stories/
 ├── LiveAgentStateAndTools.stories.ts
 ├── LiveAgentThreadsAndDebugging.stories.ts
 ├── LiveAgentLayoutPatterns.stories.ts
+├── LiveAgentHumanInTheLoop.stories.ts
 ├── LiveAgentRenderTool.stories.ts
 └── liveAgentStoryShared.ts
 ```
@@ -36,6 +37,7 @@ packages/vue/src/stories/
 - `Workflows > Live Agent > Advanced Scenarios > State and Tools`
 - `Workflows > Live Agent > Advanced Scenarios > Threads and Debugging`
 - `Workflows > Live Agent > Advanced Scenarios > Layout Patterns`
+- `Workflows > Live Agent > Advanced Scenarios > Human In The Loop`
 - `Workflows > Live Agent > Advanced Scenarios > Tool Rendering`
 - `Workflows > Live Agent > Checklist`
 
@@ -44,6 +46,7 @@ packages/vue/src/stories/
 - `LiveAgentStateAndTools.stories.ts` keeps shared-state and frontend-tool flows together.
 - `LiveAgentThreadsAndDebugging.stories.ts` groups thread isolation and state inspection.
 - `LiveAgentLayoutPatterns.stories.ts` groups embedded and host-layout integrations.
+- `LiveAgentHumanInTheLoop.stories.ts` demonstrates an approval gate between the live agent and the host UI.
 - `LiveAgentRenderTool.stories.ts` keeps tool-rendering workflow coverage separate and easy to find.
 - `liveAgentStoryShared.ts` owns the provider and scenario-purpose decorator so live stories stay consistent.
 

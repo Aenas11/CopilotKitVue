@@ -23,6 +23,7 @@ Then use the `Workflows` section in Storybook.
 | Error Handling | `Workflows/Live Agent/Advanced Scenarios/Layout Patterns` | Validates split-pane integration with supporting host UI alongside chat |
 | Minimal Composable UI | `Workflows/Live Agent/Advanced Scenarios/Layout Patterns` | Provides a baseline full-screen dedicated assistant surface |
 | Render Tool Live | `Workflows/Live Agent/Advanced Scenarios/Tool Rendering` | Verifies live `useRenderTool` behavior for runtime-backed tool calls |
+| Approval Workflow Live | `Workflows/Live Agent/Advanced Scenarios/Human In The Loop` | Verifies that the live agent can request operator approval through a frontend tool before a sensitive action |
 
 ## Basic And Supporting Live Stories
 
@@ -39,6 +40,7 @@ packages/vue/src/stories/
 ├── LiveAgentStateAndTools.stories.ts
 ├── LiveAgentThreadsAndDebugging.stories.ts
 ├── LiveAgentLayoutPatterns.stories.ts
+├── LiveAgentHumanInTheLoop.stories.ts
 ├── LiveAgentRenderTool.stories.ts
 └── liveAgentStoryShared.ts
 ```
@@ -54,6 +56,7 @@ All runtime-backed stories use `StoryRuntimeProvider` from `liveAgentStoryShared
 - Multi-thread: start separate conversations in Thread A and Thread B
 - State inspection: send a message and watch `agentInfo` and `stateJson`
 - Render tool: "What is the storybook status?"
+- Human approval: "Approve a $50 refund to Jordan Rivera on ticket #12345 for the duplicate charge."
 
 ## Adding Another Advanced Workflow Story
 
@@ -109,6 +112,7 @@ Advanced live workflow stories are defined across themed files:
 packages/vue/src/stories/LiveAgentStateAndTools.stories.ts
 packages/vue/src/stories/LiveAgentThreadsAndDebugging.stories.ts
 packages/vue/src/stories/LiveAgentLayoutPatterns.stories.ts
+packages/vue/src/stories/LiveAgentHumanInTheLoop.stories.ts
 packages/vue/src/stories/LiveAgentRenderTool.stories.ts
 packages/vue/src/stories/liveAgentStoryShared.ts
 ```
