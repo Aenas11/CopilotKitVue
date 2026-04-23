@@ -12,7 +12,7 @@ const preview: Preview = {
                     "Scenarios",
                     ["Overview", "Deterministic"],
                     "Workflows",
-                    ["Overview", "Live Agent", ["Basics", "Advanced Scenarios", ["State and Tools", "Threads and Debugging", "Layout Patterns", "Tool Rendering"], "Checklist"]],
+                    ["Overview", "Live Agent", ["Basics", "Advanced Scenarios", ["State and Tools", "Threads and Debugging", "Layout Patterns", "Tool Rendering", "Generative UI"], "Checklist"]],
                 ],
             },
         },
