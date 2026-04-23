@@ -7,11 +7,7 @@
  * component tree via `provide(CopilotKitKey, ...)`.
  *
  * @example
- * ```vue
- * <CopilotKitProvider runtime-url="/api/copilotkit">
- *   <App />
- * </CopilotKitProvider>
- * ```
+ * Use at app root with a runtime endpoint (for example `/api/copilotkit`).
  */
 import { defineComponent, provide, watch, onUnmounted, h } from "vue";
 import { CopilotKitCore, type CopilotKitCoreConfig } from "@copilotkit/core";

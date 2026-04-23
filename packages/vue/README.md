@@ -168,6 +168,10 @@ Use the mode that matches your task:
 
 This split avoids intermittent `storybook/status` watcher shutdown errors during normal `storybook:dev` usage while still keeping Storybook-driven tests available on demand.
 
+Live smoke checklist page in Storybook:
+
+- `Scenarios/Live Agent Checklist` (story file: `src/stories/LiveAgentChecklist.stories.ts`)
+
 ---
 
 ## License
