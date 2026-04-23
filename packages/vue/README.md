@@ -135,6 +135,12 @@ pnpm storybook   # run Storybook UI only
 pnpm build-storybook # build static Storybook
 ```
 
+Quick script guide:
+
+- Daily UI development: `pnpm storybook:dev`
+- Storybook test widget/watch mode: `pnpm storybook:ui:with-tests`
+- Story tests in CLI: `pnpm test:stories`
+
 ### Storybook with real runtime/agent
 
 The Vue package Storybook is wired to the same local runtime + agent flow used by examples:
@@ -151,6 +157,16 @@ pnpm storybook:dev
 ```
 
 This keeps Storybook behavior aligned with the example environment instead of using purely mocked transport.
+
+### Storybook modes
+
+Use the mode that matches your task:
+
+- `pnpm storybook:dev`: Recommended default for daily UI work. Runs Storybook + runtime + agent without the Storybook test widget watcher.
+- `pnpm storybook:ui:with-tests`: Runs Storybook UI with `@storybook/addon-vitest` enabled (testing widget/watch mode).
+- `pnpm test:stories`: Runs Storybook story tests in CLI via Vitest (`--project storybook`).
+
+This split avoids intermittent `storybook/status` watcher shutdown errors during normal `storybook:dev` usage while still keeping Storybook-driven tests available on demand.
 
 ---
 
