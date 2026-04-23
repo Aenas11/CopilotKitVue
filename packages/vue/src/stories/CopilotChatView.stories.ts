@@ -1,4 +1,6 @@
 import type { Message } from "@ag-ui/client";
+import type { Meta, StoryObj } from "@storybook/vue3-vite";
+import { expect, within } from "storybook/test";
 import CopilotChatView from "../components/chat/CopilotChatView.vue";
 
 const messages: Message[] = [
@@ -14,25 +16,41 @@ const meta = {
         isRunning: false,
         inputPlaceholder: "Type a message...",
         suggestions: [
-            { title: "What changed since yesterday?", message: "What changed since yesterday?" },
-            { title: "Show pending tasks", message: "Show pending tasks" },
+            { title: "What changed since yesterday?", message: "What changed since yesterday?", isLoading: false },
+            { title: "Show pending tasks", message: "Show pending tasks", isLoading: false },
         ],
     },
-};
+} satisfies Meta<typeof CopilotChatView>;
 
 export default meta;
 
-export const IdleWithMessages = {};
+type Story = StoryObj<typeof meta>;
 
-export const Loading = {
-    args: {
-        isRunning: true,
+export const IdleWithMessages: Story = {
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByText("Can you summarize this?")).toBeTruthy();
+        await expect(canvas.getByText("Absolutely. Share the content and I will summarize it.")).toBeTruthy();
     },
 };
 
-export const Empty = {
+export const Loading: Story = {
+    args: {
+        isRunning: true,
+    },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByRole("button", { name: "Stop generation" })).toBeTruthy();
+    },
+};
+
+export const Empty: Story = {
     args: {
         messages: [],
         suggestions: [],
+    },
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByText("How can I help you today?")).toBeTruthy();
     },
 };

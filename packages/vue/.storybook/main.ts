@@ -7,7 +7,7 @@ const config: StorybookConfig = {
         options: {},
     },
     stories: ["../src/stories/**/*.stories.@(ts|mdx)"],
-    addons: ["@storybook/addon-essentials", "@storybook/addon-interactions"],
+    addons: ["@storybook/addon-docs", "@storybook/addon-vitest"],
     viteFinal: async (viteConfig) => {
         const hasVuePlugin = (viteConfig.plugins ?? []).some((plugin) => plugin?.name === "vite:vue");
 
