@@ -73,14 +73,13 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
         {
             ChatOptions = chatRunOptions.ChatOptions.Clone(),
             AllowBackgroundResponses = chatRunOptions.AllowBackgroundResponses,
-           // ContinuationToken = chatRunOptions.ContinuationToken,
             ChatClientFactory = chatRunOptions.ChatClientFactory,
         };
 
         // Configure JSON schema response format for structured state output
-        firstRunOptions.ChatOptions.ResponseFormat = ChatResponseFormat.ForJsonSchema<ProverbsStateSnapshot>(
-            schemaName: "ProverbsStateSnapshot",
-            schemaDescription: "A response containing the current list of proverbs");
+        firstRunOptions.ChatOptions.ResponseFormat = ChatResponseFormat.ForJsonSchema<AppStateSnapshot>(
+            schemaName: "AppStateSnapshot",
+            schemaDescription: "A response containing the current application state, including currentPage, userName, and any proverbs.");
 
         // Add current state to the conversation - state is already a JsonElement
         ChatMessage stateUpdateMessage = new(
@@ -129,11 +128,21 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
             Contents = [new DataContent(stateBytes, "application/json")]
         };
 
-        // Second run: Generate user-friendly summary
-        var secondRunMessages = contextAwareMessages.Concat(response.Messages).Append(
-            new ChatMessage(
-                ChatRole.System,
-                [new TextContent("Please provide a concise summary of the state changes in at most two sentences.")]));
+        // Second run: Generate user-friendly summary grounded in the resolved state snapshot.
+        ChatMessage latestStateMessage = new(
+            ChatRole.System,
+            [
+                new TextContent("Use this latest application state JSON when answering the user:"),
+                new TextContent(JsonSerializer.Serialize(stateSnapshot, this._jsonSerializerOptions.GetTypeInfo(typeof(JsonElement))))
+            ]);
+
+        var secondRunMessages = contextAwareMessages
+            .Concat(response.Messages)
+            .Append(latestStateMessage)
+            .Append(
+                new ChatMessage(
+                    ChatRole.System,
+                    [new TextContent("Please answer the user's request using the latest application state in at most two sentences. If the user asks about their current page, username, or app state, report those values directly. If state changed, mention the relevant change concisely.")])) ;
 
         await foreach (var update in this.InnerAgent.RunStreamingAsync(secondRunMessages, session, options, cancellationToken).ConfigureAwait(false))
         {
@@ -143,12 +152,7 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
 
     private ChatMessage? CreateContextMessage(AgentRunOptions? options)
     {
-        if (options is not ChatClientAgentRunOptions chatRunOptions)
-        {
-            return null;
-        }
-
-        object? context = TryGetRuntimeContext(chatRunOptions);
+        object? context = TryGetRuntimeContext(options);
         if (context is null)
         {
             return null;
@@ -169,9 +173,36 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
             ]);
     }
 
-    private object? TryGetRuntimeContext(ChatClientAgentRunOptions chatRunOptions)
+    private object? TryGetRuntimeContext(AgentRunOptions? runOptions)
     {
-        object? chatOptions = chatRunOptions.ChatOptions;
+        if (runOptions is null)
+        {
+            return null;
+        }
+
+        // Some runtimes expose context directly on run options.
+        object? directContext = GetPropertyValue(runOptions, "Context")
+            ?? GetPropertyValue(runOptions, "AgUiContext");
+        if (directContext is not null)
+        {
+            return directContext;
+        }
+
+        object? runAdditionalProperties = GetPropertyValue(runOptions, "AdditionalProperties");
+        object? additionalContext = TryGetAdditionalPropertyValue(
+            runAdditionalProperties,
+            "context",
+            "ag_ui_context",
+            "conversationContext");
+        if (additionalContext is not null)
+        {
+            return additionalContext;
+        }
+
+        // ChatClientAgentRunOptions exposes nested ChatOptions where context often lives.
+        object? chatOptions = runOptions is ChatClientAgentRunOptions chatRunOptions
+            ? chatRunOptions.ChatOptions
+            : GetPropertyValue(runOptions, "ChatOptions");
         if (chatOptions is null)
         {
             return null;
@@ -190,7 +221,145 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
             return context;
         }
 
-        return GetPropertyValue(chatOptions, "AgUiContext");
+        context = GetPropertyValue(chatOptions, "AgUiContext");
+        if (context is not null)
+        {
+            return context;
+        }
+
+        // Final fallback: recursively inspect the whole options object for context-shaped data.
+        return FindContextRecursively(runOptions, 0, new HashSet<object>(ReferenceEqualityComparer.Instance));
+    }
+
+    private static readonly string[] ContextKeys =
+    [
+        "context",
+        "ag_ui_context",
+        "conversationContext",
+        "frontendContext",
+        "frontend_context"
+    ];
+
+    private object? FindContextRecursively(object? value, int depth, HashSet<object> visited)
+    {
+        if (value is null || depth > 6)
+        {
+            return null;
+        }
+
+        if (value is string)
+        {
+            return null;
+        }
+
+        if (value.GetType().IsClass)
+        {
+            if (!visited.Add(value))
+            {
+                return null;
+            }
+        }
+
+        if (value is JsonElement element)
+        {
+            return FindContextInJsonElement(element, depth, visited);
+        }
+
+        object? direct = TryGetAdditionalPropertyValue(value, ContextKeys);
+        if (direct is not null)
+        {
+            return direct;
+        }
+
+        foreach (string propertyName in ContextKeys)
+        {
+            object? propertyValue = GetPropertyValue(value, propertyName);
+            if (propertyValue is not null)
+            {
+                return propertyValue;
+            }
+        }
+
+        if (value is IEnumerable enumerable)
+        {
+            foreach (object? item in enumerable)
+            {
+                object? nested = FindContextRecursively(item, depth + 1, visited);
+                if (nested is not null)
+                {
+                    return nested;
+                }
+            }
+
+            return null;
+        }
+
+        PropertyInfo[] properties = value.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        foreach (PropertyInfo property in properties)
+        {
+            if (property.GetIndexParameters().Length > 0)
+            {
+                continue;
+            }
+
+            object? nestedValue;
+            try
+            {
+                nestedValue = property.GetValue(value);
+            }
+            catch
+            {
+                continue;
+            }
+
+            object? nestedContext = FindContextRecursively(nestedValue, depth + 1, visited);
+            if (nestedContext is not null)
+            {
+                return nestedContext;
+            }
+        }
+
+        return null;
+    }
+
+    private object? FindContextInJsonElement(JsonElement element, int depth, HashSet<object> visited)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            foreach (string key in ContextKeys)
+            {
+                foreach (JsonProperty property in element.EnumerateObject())
+                {
+                    if (string.Equals(property.Name, key, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return property.Value;
+                    }
+                }
+            }
+
+            foreach (JsonProperty property in element.EnumerateObject())
+            {
+                object? nested = FindContextInJsonElement(property.Value, depth + 1, visited);
+                if (nested is not null)
+                {
+                    return nested;
+                }
+            }
+        }
+
+        if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in element.EnumerateArray())
+            {
+                object? nested = FindContextInJsonElement(item, depth + 1, visited);
+                if (nested is not null)
+                {
+                    return nested;
+                }
+            }
+        }
+
+        return null;
     }
 
     private static object? GetPropertyValue(object target, string propertyName)
@@ -205,6 +374,25 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
     {
         if (additionalProperties is null)
         {
+            return null;
+        }
+
+        if (additionalProperties is JsonElement additionalJson)
+        {
+            if (additionalJson.ValueKind == JsonValueKind.Object)
+            {
+                foreach (string key in keys)
+                {
+                    foreach (JsonProperty property in additionalJson.EnumerateObject())
+                    {
+                        if (string.Equals(property.Name, key, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return property.Value;
+                        }
+                    }
+                }
+            }
+
             return null;
         }
 
@@ -282,7 +470,8 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
 
                 if (item is JsonElement itemElement && itemElement.ValueKind is JsonValueKind.Object)
                 {
-                    string? description = TryReadJsonElementProperty(itemElement, "description");
+                    string? description = TryReadJsonElementProperty(itemElement, "description")
+                        ?? TryReadJsonElementProperty(itemElement, "key");
                     string? value = TryReadJsonElementProperty(itemElement, "value");
                     if (!string.IsNullOrWhiteSpace(description) && !string.IsNullOrWhiteSpace(value))
                     {
@@ -291,7 +480,8 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
                     }
                 }
 
-                string? reflectedDescription = GetStringPropertyValue(item, "Description");
+                string? reflectedDescription = GetStringPropertyValue(item, "Description")
+                    ?? GetStringPropertyValue(item, "Key");
                 string? reflectedValue = GetStringPropertyValue(item, "Value");
                 if (!string.IsNullOrWhiteSpace(reflectedDescription) && !string.IsNullOrWhiteSpace(reflectedValue))
                 {
@@ -334,4 +524,5 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
             _ => property.GetRawText(),
         };
     }
+
 }
