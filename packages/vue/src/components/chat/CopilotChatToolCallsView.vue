@@ -8,7 +8,7 @@ import { computed, defineComponent } from "vue";
 import type { AssistantMessage, Message, ToolMessage } from "@ag-ui/core";
 import { parseJson, partialJSONParse } from "@copilotkit/shared";
 import { inject } from "vue";
-import { CopilotKitKey } from "../../providers/keys";
+import { CopilotKitKey, CopilotChatConfigurationKey } from "../../providers/keys";
 import {
   getToolCallRenderer,
   type ToolCallRenderStatus,
@@ -27,6 +27,7 @@ const props = withDefaults(
 );
 
 const copilotKitContext = inject(CopilotKitKey, null);
+const chatConfig = inject(CopilotChatConfigurationKey, null);
 
 const RenderToolContent = defineComponent({
   name: "RenderToolContent",
@@ -52,8 +53,11 @@ interface ResolvedToolCall {
 const resolvedToolCalls = computed<ResolvedToolCall[]>(() => {
   if (!props.message.toolCalls?.length) return [];
 
-  const messageAgentId = (props.message as AssistantMessage & { agentId?: string })
-    .agentId;
+  // Prefer the agentId from the chat configuration provider (set by CopilotChat
+  // via the agent-id prop). Fall back to whatever the message carries, then
+  // undefined so the registry wildcard fallback can still match.
+  const resolvedAgentId = chatConfig?.agentId
+    ?? (props.message as AssistantMessage & { agentId?: string }).agentId;
 
   return props.message.toolCalls.map((tc) => {
     const toolMessage = props.messages.find(
@@ -63,7 +67,7 @@ const resolvedToolCalls = computed<ResolvedToolCall[]>(() => {
     const renderer = copilotKitContext
       ? getToolCallRenderer(copilotKitContext.copilotkit, {
         name: tc.function?.name ?? tc.id,
-        agentId: messageAgentId,
+        agentId: resolvedAgentId,
       })
       : undefined;
 

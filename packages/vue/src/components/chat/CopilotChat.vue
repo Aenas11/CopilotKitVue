@@ -21,8 +21,11 @@ const props = withDefaults(
     className?: string;
     throttleMs?: number;
     isModalDefaultOpen?: boolean;
+    hideTextWhenCustomToolRendered?: boolean;
   }>(),
-  {},
+  {
+    hideTextWhenCustomToolRendered: true,
+  },
 );
 
 const { messages, sendMessage, stop, isLoading } = useCopilotChat({
@@ -42,8 +45,8 @@ function handleSelectSuggestion(suggestion: Suggestion) {
     :is-modal-default-open="isModalDefaultOpen">
     <div class="cpk-chat" data-copilotkit :class="className">
       <CopilotChatView :messages="messages ?? []" :is-running="isLoading" :suggestions="suggestions ?? []"
-        :input-placeholder="labels?.placeholder" @submit-message="sendMessage" @stop="stop"
-        @select-suggestion="handleSelectSuggestion" />
+        :input-placeholder="labels?.placeholder" :hide-text-when-custom-tool-rendered="hideTextWhenCustomToolRendered"
+        @submit-message="sendMessage" @stop="stop" @select-suggestion="handleSelectSuggestion" />
     </div>
   </CopilotChatConfigurationProvider>
 </template>

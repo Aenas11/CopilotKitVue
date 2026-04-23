@@ -290,6 +290,9 @@ const ThreadListManagerContent = defineComponent({
           <div style="padding: 14px 16px; border-bottom: 1px solid #e2e8f0;">
             <div style="font-size: 14px; font-weight: 700; color: #1e293b;">Threads</div>
             <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">via useThreads({ agentId: "my_agent" })</div>
+            <div style="margin-top: 8px; padding: 7px 10px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; font-size: 11px; color: #92400e; line-height: 1.4;">
+              ⚠️ Requires the <strong>CopilotKit Intelligence platform</strong>. The local runtime will return a 422 error — this is expected.
+            </div>
           </div>
 
           <!-- Loading -->
@@ -298,8 +301,16 @@ const ThreadListManagerContent = defineComponent({
           </div>
 
           <!-- Error -->
-          <div v-else-if="error" style="padding: 14px 16px; background: #fef2f2; border-left: 3px solid #f87171; margin: 8px; border-radius: 6px; font-size: 12px; color: #991b1b;">
-            {{ error.message }}
+          <div v-else-if="error" style="padding: 12px 14px; background: #fef2f2; border-left: 3px solid #f87171; margin: 8px; border-radius: 6px; font-size: 12px; color: #991b1b;">
+            <div style="font-weight: 700; margin-bottom: 4px;">
+              {{ error.message.includes('422') ? 'Intelligence platform not available' : 'Error loading threads' }}
+            </div>
+            <div v-if="error.message.includes('422')" style="color: #b91c1c; line-height: 1.5;">
+              The local runtime does not support the Threads API. Thread management requires a
+              <strong>CopilotKit Intelligence platform</strong> endpoint with a valid API key.<br />
+              <span style="opacity: 0.75; margin-top: 4px; display: block;">{{ error.message }}</span>
+            </div>
+            <div v-else style="opacity: 0.85;">{{ error.message }}</div>
           </div>
 
           <!-- Empty -->
