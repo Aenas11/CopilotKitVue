@@ -130,7 +130,27 @@ cd packages/vue
 pnpm build       # build this package only
 pnpm test        # run package tests
 pnpm check-types # type-check this package
+pnpm storybook:dev # run Storybook + runtime + agent (example-backed)
+pnpm storybook   # run Storybook UI only
+pnpm build-storybook # build static Storybook
 ```
+
+### Storybook with real runtime/agent
+
+The Vue package Storybook is wired to the same local runtime + agent flow used by examples:
+
+- Agent process: `../../examples/scripts/runner.js run-agent`
+- Runtime process: `../../examples/basic/runtime-server.mjs`
+- Storybook UI on `http://localhost:6006`
+- Storybook proxies `/api/copilotkit` to `http://localhost:4000`
+
+Start everything together from `packages/vue`:
+
+```bash
+pnpm storybook:dev
+```
+
+This keeps Storybook behavior aligned with the example environment instead of using purely mocked transport.
 
 ---
 
