@@ -157,8 +157,14 @@ public AIAgent CreateAzureHostedAgent(ConfigurationManager configurationManager)
 // Data Models
 // =================
 
-public class ProverbsStateSnapshot
+public class AppStateSnapshot
 {
+    [JsonPropertyName("currentPage")]
+    public string CurrentPage { get; set; } = string.Empty;
+
+    [JsonPropertyName("userName")]
+    public string UserName { get; set; } = string.Empty;
+
     [JsonPropertyName("proverbs")]
     public List<string> Proverbs { get; set; } = [];
 }
@@ -186,6 +192,6 @@ public partial class Program { }
 // =================
 // Serializer Context
 // =================
-[JsonSerializable(typeof(ProverbsStateSnapshot))]
+[JsonSerializable(typeof(AppStateSnapshot))]
 [JsonSerializable(typeof(WeatherInfo))]
 internal sealed partial class ProverbsAgentSerializerContext : JsonSerializerContext;

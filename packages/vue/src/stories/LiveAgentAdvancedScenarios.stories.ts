@@ -1,9 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/vue3-vite";
-import { defineComponent, provide } from "vue";
+import { defineComponent, provide, ref, computed, watch } from "vue";
 import { CopilotKitCore } from "@copilotkit/core";
 import CopilotChat from "../components/chat/CopilotChat.vue";
 import CopilotSidebar from "../components/chat/CopilotSidebar.vue";
+import CopilotChatView from "../components/chat/CopilotChatView.vue";
+import CopilotChatInput from "../components/chat/CopilotChatInput.vue";
 import { CopilotKitKey, type CopilotKitContext } from "../providers/keys";
+import { useFrontendTool } from "../composables/useFrontendTool";
+import { useAgent } from "../composables/useAgent";
+import { useCopilotChat } from "../composables/useCopilotChat";
+import { useSuggestions } from "../composables/useSuggestions";
 
 const StoryRuntimeProvider = defineComponent({
     name: "StoryRuntimeProvider",
@@ -49,56 +55,239 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Story 1: Context-Aware Chat
- * Standard CopilotChat interface optimized for context-aware conversations.
- * The agent runtime can access shared context about user state and page.
+ * Story 1: Shared AG-UI State
+ * Demonstrates shared app state synced through AG-UI agent state.
+ * Try: "What is the current page?" or "What is my username?"
  */
+const ContextSharingContent = defineComponent({
+    components: { CopilotChat },
+    props: {
+        threadId: { type: String, required: true },
+    },
+    setup(props) {
+        const currentPage = ref("Dashboard");
+        const userName = ref("Alex");
+        const isApplyingRemoteState = ref(false);
+        const { agent, state, isRunning } = useAgent({
+            agentId: "my_agent",
+            threadId: props.threadId,
+        });
+
+        const pushStateToAgent = () => {
+            if (!agent.value || isApplyingRemoteState.value) {
+                return;
+            }
+
+            const existingState = (state.value ?? {}) as Record<string, unknown>;
+            agent.value.setState({
+                ...existingState,
+                currentPage: currentPage.value,
+                userName: userName.value,
+            });
+        };
+
+        watch(
+            agent,
+            (resolvedAgent) => {
+                if (!resolvedAgent) {
+                    return;
+                }
+
+                const existingState = (resolvedAgent.state ?? {}) as Record<string, unknown>;
+                const hasSharedState =
+                    typeof existingState.currentPage === "string" ||
+                    typeof existingState.userName === "string";
+
+                if (!hasSharedState) {
+                    pushStateToAgent();
+                }
+            },
+            { immediate: true },
+        );
+
+        watch([currentPage, userName], () => {
+            pushStateToAgent();
+        });
+
+        watch(
+            state,
+            (nextState) => {
+                const sharedState = (nextState ?? {}) as Record<string, unknown>;
+                const nextPage = typeof sharedState.currentPage === "string" ? sharedState.currentPage : null;
+                const nextUser = typeof sharedState.userName === "string" ? sharedState.userName : null;
+
+                if (!nextPage && !nextUser) {
+                    return;
+                }
+
+                isApplyingRemoteState.value = true;
+
+                if (nextPage && nextPage !== currentPage.value) {
+                    currentPage.value = nextPage;
+                }
+
+                if (nextUser && nextUser !== userName.value) {
+                    userName.value = nextUser;
+                }
+
+                isApplyingRemoteState.value = false;
+            },
+            { deep: true },
+        );
+
+        const stateJson = computed(() => {
+            if (!state.value) {
+                return "{}";
+            }
+
+            return JSON.stringify(state.value, null, 2);
+        });
+
+        return { currentPage, userName, stateJson, isRunning, threadId: props.threadId };
+    },
+    template: `
+    <div style="display: flex; height: 100vh;">
+      <aside style="width: 200px; padding: 16px; background: #f5f5f5; border-right: 1px solid #ddd;">
+        <h3 style="margin: 0 0 16px;">Shared State</h3>
+        <div style="margin: 12px 0;">
+          <label style="display: block; font-weight: bold; margin-bottom: 4px;">User:</label>
+          <input v-model="userName" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div style="margin: 12px 0;">
+          <label style="display: block; font-weight: bold; margin-bottom: 4px;">Current Page:</label>
+          <select v-model="currentPage" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+            <option>Dashboard</option>
+            <option>Settings</option>
+            <option>Profile</option>
+            <option>Billing</option>
+          </select>
+        </div>
+        <p style="font-size: 12px; color: #666; margin-top: 16px;">
+          💡 This state is synced through AG-UI shared state. Try asking:
+          <br/>"What page am I on?"
+          <br/>"Who am I?"
+          <br/>"Summarize my current state"
+        </p>
+        <div style="margin-top: 16px;">
+          <div style="font-size: 12px; font-weight: bold; margin-bottom: 6px;">Agent State</div>
+          <pre style="margin: 0; background: white; padding: 8px; border-radius: 4px; border: 1px solid #ddd; font-size: 11px; max-height: 180px; overflow: auto;">{{ stateJson }}</pre>
+        </div>
+      </aside>
+      <main style="flex: 1;">
+        <CopilotChat
+          agent-id="my_agent"
+          :thread-id="threadId"
+          :labels="{ title: 'Context-Aware Chat', placeholder: 'Ask about your state...' }"
+        />
+      </main>
+    </div>
+  `,
+});
+
 export const ContextSharingChat: Story = {
     render: () => ({
-        components: {
-            StoryRuntimeProvider,
-            CopilotChat,
+        components: { StoryRuntimeProvider, ContextSharingContent },
+        data() {
+            return {
+                threadId: `story-context-sharing-agui-${Date.now()}`,
+            };
         },
         template: `
-          <StoryRuntimeProvider runtime-url="/api/copilotkit" thread-id="story-context-sharing">
-            <div style="height: 100vh; max-width: 980px; margin: 0 auto; padding: 16px; box-sizing: border-box;">
-              <CopilotChat
-                agent-id="my_agent"
-                :labels="{ 
-                  title: 'Context-Aware Chat', 
-                  placeholder: 'Ask about context, settings, or your current state...' 
-                }"
-              />
-            </div>
-          </StoryRuntimeProvider>
-        `,
+      <StoryRuntimeProvider runtime-url="/api/copilotkit" :thread-id="threadId">
+        <ContextSharingContent :thread-id="threadId" />
+      </StoryRuntimeProvider>
+    `,
     }),
 };
 
 /**
- * Story 2: Tool-Powered Chat
- * Chat interface where the agent can invoke client-side tools.
- * Tools might include counter operations, state updates, or UI interactions.
+ * Story 2: Frontend Tools
+ * Demonstrates useFrontendTool — agent can call client-side functions.
+ * Try: "What's the counter value?" or "Increment the counter by 5"
  */
+const ToolsContent = defineComponent({
+    components: { CopilotChat },
+    setup() {
+        const counter = ref(0);
+        const lastToolCall = ref<string | null>(null);
+
+        // Register read_counter tool
+        useFrontendTool({
+            name: "read_counter",
+            description: "Get the current counter value",
+            agentId: "my_agent",
+            handler: async () => {
+                lastToolCall.value = `✓ read_counter() → ${counter.value}`;
+                return { value: counter.value };
+            },
+        });
+
+        // Register increment_counter tool
+        useFrontendTool({
+            name: "increment_counter",
+            description: "Increment the counter by a specified amount (default 1)",
+            agentId: "my_agent",
+            handler: async ({ amount = 1 }: { amount?: number } = {}) => {
+                counter.value += amount;
+                lastToolCall.value = `✓ increment_counter(${amount}) → ${counter.value}`;
+                return { newValue: counter.value };
+            },
+        });
+
+        // Register reset_counter tool
+        useFrontendTool({
+            name: "reset_counter",
+            description: "Reset the counter to zero",
+            agentId: "my_agent",
+            handler: async () => {
+                counter.value = 0;
+                lastToolCall.value = "✓ reset_counter() → 0";
+                return { value: 0 };
+            },
+        });
+
+        return { counter, lastToolCall };
+    },
+    template: `
+    <div style="display: flex; height: 100vh;">
+      <aside style="width: 240px; padding: 16px; background: #f5f5f5; border-right: 1px solid #ddd; overflow-y: auto;">
+        <h3 style="margin: 0 0 16px;">Tool Demo</h3>
+        <div style="font-size: 48px; font-weight: bold; text-align: center; margin: 20px 0; padding: 16px; background: white; border-radius: 8px;">
+          {{ counter }}
+        </div>
+        <div style="display: grid; gap: 8px; margin: 16px 0;">
+          <button @click="counter++" style="padding: 8px; cursor: pointer; background: #ddd; border: none; border-radius: 4px;">+1</button>
+          <button @click="counter -= 1" style="padding: 8px; cursor: pointer; background: #ddd; border: none; border-radius: 4px;">-1</button>
+          <button @click="counter = 0" style="padding: 8px; cursor: pointer; background: #ddd; border: none; border-radius: 4px;">Reset</button>
+        </div>
+        <div v-if="lastToolCall" style="margin-top: 16px; padding: 10px; background: #e8f4f8; border-left: 4px solid #0066cc; border-radius: 4px; font-size: 12px; font-family: monospace; color: #0066cc;">
+          {{ lastToolCall }}
+        </div>
+        <p style="font-size: 12px; color: #666; margin-top: 16px; line-height: 1.4;">
+          💡 Ask the agent to:
+          <br/>"What's the value?"
+          <br/>"Increment to 10"
+          <br/>"Reset the counter"
+        </p>
+      </aside>
+      <main style="flex: 1;">
+        <CopilotChat
+          agent-id="my_agent"
+          :labels="{ title: 'Tool-Powered Chat', placeholder: 'Ask agent to modify state...' }"
+        />
+      </main>
+    </div>
+  `,
+});
+
 export const FrontendToolsChat: Story = {
     render: () => ({
-        components: {
-            StoryRuntimeProvider,
-            CopilotChat,
-        },
+        components: { StoryRuntimeProvider, ToolsContent },
         template: `
-          <StoryRuntimeProvider runtime-url="/api/copilotkit" thread-id="story-frontend-tools">
-            <div style="height: 100vh; max-width: 980px; margin: 0 auto; padding: 16px; box-sizing: border-box;">
-              <CopilotChat
-                agent-id="my_agent"
-                :labels="{ 
-                  title: 'Tool-Powered Chat', 
-                  placeholder: 'Ask the agent to perform actions or read state...' 
-                }"
-              />
-            </div>
-          </StoryRuntimeProvider>
-        `,
+      <StoryRuntimeProvider runtime-url="/api/copilotkit" thread-id="story-frontend-tools">
+        <ToolsContent />
+      </StoryRuntimeProvider>
+    `,
     }),
 };
 
@@ -162,35 +351,64 @@ export const MultiThreadChat: Story = {
 };
 
 /**
- * Story 4: Custom Minimal Chat
- * Demonstrates building a minimal chat UI with custom styling.
- * Shows how to compose CopilotChat with supporting UI elements.
+ * Story 4: Agent State Inspection
+ * Demonstrates low-level useAgent hook with reactive state inspection.
+ * Shows messages, state, running status in real-time.
  */
+const StateInspectionContent = defineComponent({
+    components: { CopilotChatView, CopilotChatInput },
+    setup() {
+        const { agent, messages, state, isRunning } = useAgent({
+            agentId: "my_agent",
+            threadId: "story-agent-state",
+        });
+
+        const { sendMessage } = useCopilotChat({
+            agentId: "my_agent",
+            threadId: "story-agent-state",
+        });
+
+        const stateJson = computed(() => {
+            if (!state.value) return "{}";
+            return JSON.stringify(state.value, null, 2);
+        });
+
+        const agentInfo = computed(() => ({
+            agentId: agent.value?.agentId || "unknown",
+            threadId: agent.value?.threadId || "none",
+            messageCount: messages.value?.length || 0,
+            isRunning: isRunning.value,
+        }));
+
+        return { messages, isRunning, stateJson, agentInfo, sendMessage };
+    },
+    template: `
+    <div style="display: flex; height: 100vh; gap: 16px; padding: 16px;">
+      <div style="flex: 1; display: flex; flex-direction: column;">
+        <h3 style="margin: 0 0 12px 0;">Chat Interface</h3>
+        <div style="flex: 1; border: 1px solid #ddd; border-radius: 4px; padding: 12px; overflow-y: auto; background: #fafafa; margin-bottom: 12px;">
+          <CopilotChatView :messages="messages || []" :is-running="isRunning" />
+        </div>
+        <CopilotChatInput @submit-message="sendMessage" />
+      </div>
+      <div style="width: 320px; background: #f5f5f5; padding: 16px; border-radius: 4px; border: 1px solid #ddd; overflow-y: auto; font-family: monospace; font-size: 12px;">
+        <h4 style="margin: 0 0 8px 0; font-family: sans-serif;">Agent Info</h4>
+        <pre style="margin: 0 0 16px 0; background: white; padding: 8px; border-radius: 2px; border: 1px solid #ddd; overflow-x: auto;">{{ JSON.stringify(agentInfo, null, 2) }}</pre>
+        <h4 style="margin: 0 0 8px 0; font-family: sans-serif;">Reactive State</h4>
+        <pre style="margin: 0; background: white; padding: 8px; border-radius: 2px; border: 1px solid #ddd; overflow-x: auto; max-height: 250px; overflow-y: auto;">{{ stateJson }}</pre>
+      </div>
+    </div>
+  `,
+});
+
 export const AgentStateInspection: Story = {
     render: () => ({
-        components: {
-            StoryRuntimeProvider,
-            CopilotChat,
-        },
+        components: { StoryRuntimeProvider, StateInspectionContent },
         template: `
-          <StoryRuntimeProvider runtime-url="/api/copilotkit" thread-id="story-minimal-custom">
-            <div style="display: flex; flex-direction: column; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-              <div style="padding: 24px; color: white; text-align: center;">
-                <h1 style="margin: 0; font-size: 28px; margin-bottom: 8px;">Custom Styled Chat</h1>
-                <p style="margin: 0; opacity: 0.9;">This demonstrates custom theming and layout with CopilotChat.</p>
-              </div>
-              <div style="flex: 1; background: white; margin: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-                <CopilotChat
-                  agent-id="my_agent"
-                  :labels="{ 
-                    title: 'Chat', 
-                    placeholder: 'Type a message...' 
-                  }"
-                />
-              </div>
-            </div>
-          </StoryRuntimeProvider>
-        `,
+      <StoryRuntimeProvider runtime-url="/api/copilotkit" thread-id="story-agent-state">
+        <StateInspectionContent />
+      </StoryRuntimeProvider>
+    `,
     }),
 };
 

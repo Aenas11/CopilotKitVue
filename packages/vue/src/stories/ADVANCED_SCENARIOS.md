@@ -20,21 +20,24 @@ Then navigate to: **Scenarios > Advanced Agent Features**
 
 **Demonstrates:**
 
-- `useAgentContext` hook for sharing reactive app state
-- Shared context accessible to the agent in prompts
-- Dynamic state binding (user name, current page)
+- `useAgent` with AG-UI shared state via `agent.setState(...)`
+- Backend `STATE_SNAPSHOT` round-trip from the hosted agent
+- Dynamic shared state binding for `userName` and `currentPage`
+- User-facing responses grounded in the latest resolved app state
 
 **Try asking:**
 
 - "What page am I on?"
 - "Who am I?"
 - "Tell me about my current state"
+- "Summarize my current state"
 
 **UI Components:**
 
 - Left sidebar: editable input fields for user and page selection
+- Left sidebar: live AG-UI state JSON inspector
 - Right main area: full CopilotChat interface
-- Agent responds with knowledge of shared state
+- Agent responds from AG-UI shared state, not advisory frontend context
 
 ---
 
@@ -216,7 +219,6 @@ Then navigate to: **Scenarios > Advanced Agent Features**
 
 - ✅ `useCopilotChat` — high-level chat API (sendMessage, stop, reload)
 - ✅ `useAgent` — low-level agent subscription and state
-- ✅ `useAgentContext` — share app state with agent
 - ✅ `useFrontendTool` — register client-side tools
 - ✅ `useSuggestions` — agent-generated suggestions
 - ✅ `useCopilotKit` — access to root provider context
@@ -230,7 +232,7 @@ Then navigate to: **Scenarios > Advanced Agent Features**
 
 ### Patterns Demonstrated
 
-- ✅ Context sharing (app state → agent)
+- ✅ AG-UI shared state (app state ↔ agent state)
 - ✅ Tool calling (agent → app functions)
 - ✅ Threading/multi-conversation
 - ✅ Component composition

@@ -58,3 +58,4 @@ pnpm-debug.log*
 # Turbo / Nx caches
 .turbo/
 .nx/cache/
+examples/agent/bin-temp-verify*/*
