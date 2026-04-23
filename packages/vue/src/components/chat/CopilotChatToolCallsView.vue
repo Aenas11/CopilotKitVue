@@ -1,18 +1,21 @@
 <script setup lang="ts">
 /**
  * CopilotChatToolCallsView — renders the tool call list inside an assistant message.
- * Phase A: shows built-in tool-call badges (name + running/done status).
- * Phase B will replace the inner rendering with useRenderToolCall custom slots.
+ * Uses registered render-tool handlers when available and falls back to
+ * built-in status badges (name + running/done) otherwise.
  */
 import { computed, defineComponent } from "vue";
 import type { AssistantMessage, Message, ToolMessage } from "@ag-ui/core";
 import { parseJson, partialJSONParse } from "@copilotkit/shared";
 import { inject } from "vue";
 import { CopilotKitKey, CopilotChatConfigurationKey } from "../../providers/keys";
+import A2UIToolCallRenderer from "../tools/A2UIToolCallRenderer.vue";
 import {
   getToolCallRenderer,
   type ToolCallRenderStatus,
 } from "../../adapters/toolCallRenderRegistry";
+
+const RENDER_A2UI_TOOL_NAME = "render_a2ui";
 
 const props = withDefaults(
   defineProps<{
@@ -47,6 +50,8 @@ interface ResolvedToolCall {
   id: string;
   name: string;
   isDone: boolean;
+  status: ToolCallRenderStatus;
+  args: unknown;
   customContent?: unknown;
 }
 
@@ -79,9 +84,11 @@ const resolvedToolCalls = computed<ResolvedToolCall[]>(() => {
 
     const rawResult = typeof toolMessage?.content === "string" ? toolMessage.content : undefined;
 
+    const parsedArgs = partialJSONParse(tc.function?.arguments ?? "");
+
     const customContent = renderer?.render({
       name: tc.function?.name ?? tc.id,
-      args: partialJSONParse(tc.function?.arguments ?? ""),
+      args: parsedArgs,
       status,
       result: rawResult ? parseJson(rawResult, rawResult) : rawResult,
     });
@@ -90,6 +97,8 @@ const resolvedToolCalls = computed<ResolvedToolCall[]>(() => {
       id: tc.id,
       name: tc.function?.name ?? tc.id,
       isDone: !!toolMessage,
+      status,
+      args: parsedArgs,
       customContent,
     };
   });
@@ -100,6 +109,8 @@ const resolvedToolCalls = computed<ResolvedToolCall[]>(() => {
   <div v-if="resolvedToolCalls.length" class="cpk-tool-calls">
     <template v-for="tc in resolvedToolCalls" :key="tc.id">
       <RenderToolContent v-if="tc.customContent" :content="tc.customContent" />
+
+      <A2UIToolCallRenderer v-else-if="tc.name === RENDER_A2UI_TOOL_NAME" :status="tc.status" :args="tc.args" />
 
       <div v-else class="cpk-tool-call" :class="{ 'cpk-tool-call--done': tc.isDone }">
         <!-- spinner while running -->

@@ -125,6 +125,24 @@ const runningToolCallMessages: Message[] = [
     } as Message,
 ];
 
+const a2uiToolCallMessages: Message[] = [
+    { id: "u-3", role: "user", content: "Build a UI for this data" } as Message,
+    {
+        id: "a-3",
+        role: "assistant",
+        content: "Generating a2ui...",
+        toolCalls: [
+            {
+                id: "tc-3",
+                function: {
+                    name: "render_a2ui",
+                    arguments: '{"placeholderMessages":["Building layout"],"html":["<div>"],"components":[{"type":"container"}]}',
+                },
+            },
+        ],
+    } as Message,
+];
+
 const meta = {
     title: "Scenarios/Deterministic/Render Tool",
     component: CopilotChatView,
@@ -226,5 +244,43 @@ export const CustomRendererInProgress: Story = {
         await expect(canvas.getByText("Wildcard Tool Renderer")).toBeTruthy();
         await expect(canvas.getByText(/tool: generate_release_note/)).toBeTruthy();
         await expect(canvas.getByText(/status: in-progress/)).toBeTruthy();
+    },
+};
+
+export const BuiltInA2UIFallback: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Built-in fallback example for the render_a2ui tool. " +
+                    "When no custom useRenderTool handler is registered, CopilotChatToolCallsView uses " +
+                    "the package-provided A2UI progress renderer.",
+            },
+        },
+    },
+    render: () => ({
+        components: {
+            StoryCopilotProvider,
+            CopilotChatView,
+            WhyRenderToolMatters,
+        },
+        setup() {
+            return {
+                messages: a2uiToolCallMessages,
+            };
+        },
+        template: `
+      <StoryCopilotProvider>
+        <WhyRenderToolMatters />
+        <div style="width: 440px; height: 520px;">
+          <CopilotChatView :messages="messages" :suggestions="[]" :is-running="true" />
+        </div>
+      </StoryCopilotProvider>
+    `,
+    }),
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement);
+        await expect(canvas.getByTestId("why-render-tool")).toBeTruthy();
+        await expect(canvas.getByTestId("cpk-a2ui-progress")).toBeTruthy();
     },
 };

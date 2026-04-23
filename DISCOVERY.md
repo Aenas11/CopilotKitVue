@@ -305,3 +305,9 @@ packages/vue/
 | **Phase B** | Tool rendering, `useRenderTool`, `useHumanInTheLoop`, `useInterrupt`, A2UI renderer                                    | Generative UI + tool-rendered components   |
 | **Phase C** | Attachment support, voice/audio recorder, threads, Open Generative UI (sandboxed iframe)                               | Feature parity                             |
 | **Phase D** | `CopilotTextarea` Vue component, theming API, Storybook stories, full test suite                                       | Polish + parity                            |
+
+Current status note:
+
+- Phase B core composables and chat integration are implemented in `packages/vue/src` (`useRenderTool`, `useComponent`, `useHumanInTheLoop`, `useInterrupt`, custom tool rendering in chat).
+- A2UI Phase B parity APIs are now present in Vue (`A2UIToolCallRenderer`, `createA2UIMessageRenderer`, `useRenderActivityMessage`, `useRenderCustomMessages`).
+- Remaining parity work has shifted mostly to broader export surface alignment (component prop types and non-Phase-B symbols reported by `sync:report`).
