@@ -39,7 +39,7 @@ const StoryRuntimeProvider = defineComponent({
 
 const meta = {
     title: "Scenarios/Live Agent Chat",
-    tags: ["live-agent"],
+    tags: ["live-agent", "smoke", "autodocs"],
     parameters: {
         layout: "fullscreen",
         docs: {

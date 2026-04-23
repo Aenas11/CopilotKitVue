@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/vue3-vite";
 
 const meta = {
     title: "Scenarios/Live Agent Checklist",
-    tags: ["live-agent"],
+    tags: ["live-agent", "smoke", "autodocs"],
     parameters: {
         docs: {
             description: {

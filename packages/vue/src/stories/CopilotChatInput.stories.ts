@@ -8,6 +8,7 @@ const meta = {
     args: {
         placeholder: "Ask CopilotKit...",
     },
+    tags: ["stable", "complex", "autodocs"],
 } satisfies Meta<typeof CopilotChatInput>;
 
 export default meta;

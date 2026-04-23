@@ -20,6 +20,7 @@ const meta = {
             { title: "Show pending tasks", message: "Show pending tasks", isLoading: false },
         ],
     },
+    tags: ["stable", "complex", "autodocs"],
 } satisfies Meta<typeof CopilotChatView>;
 
 export default meta;

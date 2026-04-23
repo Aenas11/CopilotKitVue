@@ -39,7 +39,7 @@ const StoryRuntimeProvider = defineComponent({
 
 const meta = {
     title: "Scenarios/Advanced Agent Features",
-    tags: ["live-agent"],
+    tags: ["live-agent", "advanced", "autodocs"],
     parameters: {
         layout: "fullscreen",
         docs: {
@@ -356,14 +356,14 @@ export const MultiThreadChat: Story = {
  * Shows messages, state, running status in real-time.
  */
 const StateInspectionContent = defineComponent({
-    components: { CopilotChatView, CopilotChatInput },
+    components: { CopilotChatView },
     setup() {
         const { agent, messages, state, isRunning } = useAgent({
             agentId: "my_agent",
             threadId: "story-agent-state",
         });
 
-        const { sendMessage } = useCopilotChat({
+        const { sendMessage, stop } = useCopilotChat({
             agentId: "my_agent",
             threadId: "story-agent-state",
         });
@@ -380,16 +380,20 @@ const StateInspectionContent = defineComponent({
             isRunning: isRunning.value,
         }));
 
-        return { messages, isRunning, stateJson, agentInfo, sendMessage };
+        return { messages, isRunning, stateJson, agentInfo, sendMessage, stop };
     },
     template: `
     <div style="display: flex; height: 100vh; gap: 16px; padding: 16px;">
       <div style="flex: 1; display: flex; flex-direction: column;">
         <h3 style="margin: 0 0 12px 0;">Chat Interface</h3>
         <div style="flex: 1; border: 1px solid #ddd; border-radius: 4px; padding: 12px; overflow-y: auto; background: #fafafa; margin-bottom: 12px;">
-          <CopilotChatView :messages="messages || []" :is-running="isRunning" />
+          <CopilotChatView
+            :messages="messages || []"
+            :is-running="isRunning"
+            @submit-message="sendMessage"
+            @stop="stop"
+          />
         </div>
-        <CopilotChatInput @submit-message="sendMessage" />
       </div>
       <div style="width: 320px; background: #f5f5f5; padding: 16px; border-radius: 4px; border: 1px solid #ddd; overflow-y: auto; font-family: monospace; font-size: 12px;">
         <h4 style="margin: 0 0 8px 0; font-family: sans-serif;">Agent Info</h4>
