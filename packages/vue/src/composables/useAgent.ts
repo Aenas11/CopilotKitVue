@@ -69,13 +69,15 @@ export function useAgent(options: UseAgentOptions = {}): UseAgentReturn {
   }
 
   function finalizeRun(id: string) {
-    const currentAgent = copilotkit.getAgent(id);
-    if (currentAgent) {
-      messages.value = [...(currentAgent.messages ?? [])];
-      state.value = currentAgent.state ?? null;
-      triggerRef(messages);
-      triggerRef(state);
+    // Prefer the currently active agent reference (often thread-scoped),
+    // then resolve using thread-aware lookup, and only then fall back to
+    // registry lookup by id.
+    const finalizedAgent = agent.value ?? resolveAgent() ?? copilotkit.getAgent(id) ?? null;
+    if (finalizedAgent && agent.value !== finalizedAgent) {
+      agent.value = finalizedAgent;
+      triggerRef(agent);
     }
+    syncFromAgent(finalizedAgent);
     isRunning.value = false;
     triggerRef(isRunning);
     stopPolling();

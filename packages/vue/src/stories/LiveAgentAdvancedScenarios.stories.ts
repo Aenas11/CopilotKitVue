@@ -1,3 +1,4 @@
+import type { Message } from "@ag-ui/client";
 import type { Meta, StoryObj } from "@storybook/vue3-vite";
 import { defineComponent, provide, ref, computed, watch } from "vue";
 import { CopilotKitCore } from "@copilotkit/core";
@@ -8,7 +9,7 @@ import CopilotChatInput from "../components/chat/CopilotChatInput.vue";
 import { CopilotKitKey, type CopilotKitContext } from "../providers/keys";
 import { useFrontendTool } from "../composables/useFrontendTool";
 import { useAgent } from "../composables/useAgent";
-import { useCopilotChat } from "../composables/useCopilotChat";
+import { useCopilotKit } from "../composables/useCopilotKit";
 import { useSuggestions } from "../composables/useSuggestions";
 
 const StoryRuntimeProvider = defineComponent({
@@ -357,16 +358,45 @@ export const MultiThreadChat: Story = {
  */
 const StateInspectionContent = defineComponent({
     components: { CopilotChatView },
-    setup() {
+    props: {
+        threadId: { type: String, required: true },
+    },
+    setup(props) {
+        const { copilotkit } = useCopilotKit();
         const { agent, messages, state, isRunning } = useAgent({
             agentId: "my_agent",
-            threadId: "story-agent-state",
+            threadId: props.threadId,
         });
 
-        const { sendMessage, stop } = useCopilotChat({
-            agentId: "my_agent",
-            threadId: "story-agent-state",
-        });
+        const sendMessage = async (text: string) => {
+            const resolvedAgent = agent.value;
+            if (!resolvedAgent) {
+                return;
+            }
+
+            resolvedAgent.messages = [
+                ...(resolvedAgent.messages ?? []),
+                {
+                    role: "user",
+                    content: text,
+                    id: crypto.randomUUID?.() ?? `msg-${Date.now()}`,
+                } as Message,
+            ];
+
+            await copilotkit.runAgent({
+                agent: resolvedAgent,
+                forwardedProps: { ...(copilotkit.properties ?? {}) },
+            });
+        };
+
+        const stop = () => {
+            const resolvedAgent = agent.value;
+            if (!resolvedAgent) {
+                return;
+            }
+
+            copilotkit.stopAgent({ agent: resolvedAgent });
+        };
 
         const stateJson = computed(() => {
             if (!state.value) return "{}";
@@ -408,9 +438,14 @@ const StateInspectionContent = defineComponent({
 export const AgentStateInspection: Story = {
     render: () => ({
         components: { StoryRuntimeProvider, StateInspectionContent },
+        data() {
+            return {
+                threadId: `story-agent-state-${Date.now()}`,
+            };
+        },
         template: `
-      <StoryRuntimeProvider runtime-url="/api/copilotkit" thread-id="story-agent-state">
-        <StateInspectionContent />
+      <StoryRuntimeProvider runtime-url="/api/copilotkit" :thread-id="threadId">
+        <StateInspectionContent :thread-id="threadId" />
       </StoryRuntimeProvider>
     `,
     }),
