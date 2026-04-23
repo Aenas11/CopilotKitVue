@@ -65,7 +65,7 @@ async function copyContent() {
     <div v-else class="cpk-message__content cpk-prose" v-html="renderedContent" />
 
     <!-- tool calls (badge list) -->
-    <CopilotChatToolCallsView :message="message" :messages="messages" />
+    <CopilotChatToolCallsView :message="message" :messages="messages" :is-running="isRunning" />
 
     <!-- toolbar: copy / thumbs / regenerate (hidden on streaming latest) -->
     <div v-if="shouldShowToolbar" class="cpk-message__toolbar">

@@ -1,6 +1,6 @@
 import type { Message } from "@ag-ui/client";
 import type { Meta, StoryObj } from "@storybook/vue3-vite";
-import { defineComponent, provide, ref, computed, watch } from "vue";
+import { defineComponent, provide, ref, computed, watch, h } from "vue";
 import { CopilotKitCore } from "@copilotkit/core";
 import CopilotChat from "../components/chat/CopilotChat.vue";
 import CopilotSidebar from "../components/chat/CopilotSidebar.vue";
@@ -11,6 +11,7 @@ import { useFrontendTool } from "../composables/useFrontendTool";
 import { useAgent } from "../composables/useAgent";
 import { useCopilotKit } from "../composables/useCopilotKit";
 import { useSuggestions } from "../composables/useSuggestions";
+import { useRenderTool } from "../composables/useRenderTool";
 
 const StoryRuntimeProvider = defineComponent({
     name: "StoryRuntimeProvider",
@@ -41,11 +42,63 @@ const StoryRuntimeProvider = defineComponent({
 const meta = {
     title: "Scenarios/Advanced Agent Features",
     tags: ["live-agent", "advanced", "autodocs"],
+  decorators: [
+    (story, context) => {
+      const renderedStory = story();
+      const storyDescription = context.parameters?.docs?.description?.story;
+      const purposeText = typeof storyDescription === "string" ? storyDescription : "";
+      const showPurpose = context.viewMode === "story" && purposeText.length > 0;
+
+      return {
+        components: {
+          RenderedStory: renderedStory,
+        },
+        setup() {
+                    const dismissed = ref(false);
+
+                    const dismiss = () => {
+                        dismissed.value = true;
+                    };
+
+          return {
+            showPurpose,
+            purposeText,
+                        dismissed,
+                        dismiss,
+          };
+        },
+        template: `
+          <div style="position: relative;">
+            <div
+                        v-if="showPurpose && !dismissed"
+            style="position: fixed; top: 12px; right: 12px; z-index: 50; max-width: 430px; background: rgba(255, 255, 255, 0.96); border: 1px solid #d1d5db; border-radius: 10px; padding: 10px 12px; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14); font-size: 12px; line-height: 1.45; color: #111827;"
+            >
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+                          <div style="font-weight: 700; color: #1d4ed8;">Scenario Purpose</div>
+                          <button
+                            type="button"
+                            aria-label="Dismiss scenario purpose"
+                            @click="dismiss"
+                            style="border: 1px solid #d1d5db; background: #fff; color: #4b5563; border-radius: 6px; cursor: pointer; font-size: 11px; line-height: 1; padding: 4px 6px;"
+                          >
+                            Close
+                          </button>
+                        </div>
+            <div>{{ purposeText }}</div>
+            </div>
+            <RenderedStory />
+          </div>
+        `,
+      };
+    },
+  ],
     parameters: {
         layout: "fullscreen",
         docs: {
             description: {
-                component: "Live advanced feature demonstrations with real agent runtime.",
+                component:
+                    "Live advanced feature demonstrations backed by a real runtime and agent. " +
+                    "These scenarios are needed to validate production-like behavior that unit tests cannot fully cover: shared state sync, tool invocation side effects, thread continuity, render-tool UX, and composable interoperability.",
             },
         },
     },
@@ -186,6 +239,15 @@ const ContextSharingContent = defineComponent({
 });
 
 export const ContextSharingChat: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Why needed: verifies two-way state synchronization between UI and agent context. " +
+                    "Use this to confirm that agent answers reflect current app state and that remote state updates propagate back safely.",
+            },
+        },
+    },
     render: () => ({
         components: { StoryRuntimeProvider, ContextSharingContent },
         data() {
@@ -282,6 +344,15 @@ const ToolsContent = defineComponent({
 });
 
 export const FrontendToolsChat: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Why needed: validates frontend tool registration and side effects in a live loop. " +
+                    "Use this to confirm the agent can call client tools reliably and UI state updates are visible immediately.",
+            },
+        },
+    },
     render: () => ({
         components: { StoryRuntimeProvider, ToolsContent },
         template: `
@@ -298,6 +369,15 @@ export const FrontendToolsChat: Story = {
  * Switch between threads to maintain separate histories and contexts.
  */
 export const MultiThreadChat: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Why needed: validates thread isolation and continuity. " +
+                    "Use this to ensure switching threads does not leak context/messages between conversations.",
+            },
+        },
+    },
     render: () => ({
         components: {
             StoryRuntimeProvider,
@@ -436,6 +516,15 @@ const StateInspectionContent = defineComponent({
 });
 
 export const AgentStateInspection: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Why needed: gives low-level visibility into useAgent behavior in real time. " +
+                    "Use this to debug running state transitions, message updates, and state payload changes.",
+            },
+        },
+    },
     render: () => ({
         components: { StoryRuntimeProvider, StateInspectionContent },
         data() {
@@ -457,6 +546,15 @@ export const AgentStateInspection: Story = {
  * Opens/closes independently from main content.
  */
 export const SidebarAndChatCombo: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Why needed: validates modal/sidebar chat behavior in realistic layouts. " +
+                    "Use this to confirm open/close lifecycle, continuity, and UX integration with host app content.",
+            },
+        },
+    },
     render: () => ({
         components: {
             StoryRuntimeProvider,
@@ -500,6 +598,15 @@ export const SidebarAndChatCombo: Story = {
  * Uses smaller font sizes and reduced padding.
  */
 export const SuggestionsDemo: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Why needed: exercises compact embedding scenarios and suggestion UX under constrained layout. " +
+                    "Use this to verify readability and interaction in smaller containers.",
+            },
+        },
+    },
     render: () => ({
         components: {
             StoryRuntimeProvider,
@@ -527,6 +634,15 @@ export const SuggestionsDemo: Story = {
  * Demonstrates integrating CopilotChat within a larger UI.
  */
 export const ErrorHandling: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Why needed: validates chat behavior inside split-pane apps where content and assistant coexist. " +
+                    "Use this to confirm layout resilience and interaction quality in composite UIs.",
+            },
+        },
+    },
     render: () => ({
         components: {
             StoryRuntimeProvider,
@@ -570,6 +686,15 @@ export const ErrorHandling: Story = {
  * Best for dedicated chat applications.
  */
 export const MinimalComposableUI: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Why needed: baseline full-screen chat scenario for dedicated assistant surfaces. " +
+                    "Use this as a reference when validating default chat ergonomics without surrounding app chrome.",
+            },
+        },
+    },
     render: () => ({
         components: {
             StoryRuntimeProvider,
@@ -584,6 +709,113 @@ export const MinimalComposableUI: Story = {
                 placeholder: 'How can I help you today?' 
               }"
             />
+          </StoryRuntimeProvider>
+        `,
+    }),
+};
+
+/**
+ * Story 9: Live Render Tool (Phase B)
+ * Demonstrates runtime-backed tool execution with a custom renderer via useRenderTool.
+ */
+const RenderToolLiveContent = defineComponent({
+    components: { CopilotChat },
+    setup() {
+        const statusCalls = ref(0);
+
+        useFrontendTool({
+            name: "get_storybook_status",
+            description:
+                "Returns Storybook live demo status. Call this when user asks for storybook status or asks to verify this demo is running.",
+            agentId: "my_agent",
+            handler: async () => {
+                statusCalls.value += 1;
+                return {
+                    status: "ok",
+                    source: "storybook-live",
+                    calls: statusCalls.value,
+                    timestamp: new Date().toISOString(),
+                };
+            },
+        });
+
+        useRenderTool({
+            name: "get_storybook_status",
+            render: ({ status, result }) =>
+                h("div", {
+                    style: {
+                        padding: "10px 12px",
+                        borderRadius: "10px",
+                        border: "1px solid #c7d2fe",
+                        background: "#eef2ff",
+                        color: "#312e81",
+                        fontSize: "12px",
+                        marginTop: "6px",
+                    },
+                }, [
+                    h("strong", "Storybook Tool Renderer"),
+                    h("div", `status: ${status}`),
+                    h("pre", {
+                        style: {
+                            margin: "6px 0 0",
+                            whiteSpace: "pre-wrap",
+                            fontFamily: "ui-monospace, monospace",
+                        },
+                    }, JSON.stringify(result, null, 2)),
+                ]),
+        });
+
+        return { statusCalls };
+    },
+    template: `
+      <div style="display: flex; height: 100vh;">
+        <aside style="width: 280px; padding: 16px; background: #f8fafc; border-right: 1px solid #e2e8f0; overflow-y: auto;">
+          <h3 style="margin: 0 0 12px;">Phase B: Render Tool Live</h3>
+          <p style="font-size: 13px; color: #475569; line-height: 1.5; margin: 0 0 10px;">
+            This story uses <code>useRenderTool</code> to render tool results inside chat.
+          </p>
+          <p style="font-size: 13px; color: #475569; line-height: 1.5; margin: 0 0 10px;">
+            Try prompts:
+            <br />- "What is the storybook status?"
+            <br />- "Call get_storybook_status and show raw output"
+          </p>
+          <div style="margin-top: 10px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; font-size: 12px;">
+            Local tool calls observed: <strong>{{ statusCalls }}</strong>
+          </div>
+        </aside>
+        <main style="flex: 1;">
+          <CopilotChat
+            agent-id="my_agent"
+            :labels="{ title: 'Phase B Tool Renderer', placeholder: 'Ask for storybook status...' }"
+          />
+        </main>
+      </div>
+    `,
+});
+
+export const RenderToolLive: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Why needed: validates Phase B custom tool rendering in a real runtime flow. " +
+                    "Raw tool payloads are technical; useRenderTool transforms them into domain-focused UI that improves trust, comprehension, and debugging.",
+            },
+        },
+    },
+    render: () => ({
+        components: {
+            StoryRuntimeProvider,
+            RenderToolLiveContent,
+        },
+        data() {
+            return {
+                threadId: `story-render-tool-live-${Date.now()}`,
+            };
+        },
+        template: `
+          <StoryRuntimeProvider runtime-url="/api/copilotkit" :thread-id="threadId">
+            <RenderToolLiveContent />
           </StoryRuntimeProvider>
         `,
     }),
