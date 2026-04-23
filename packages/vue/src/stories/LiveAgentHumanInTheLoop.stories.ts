@@ -75,8 +75,8 @@ const LiveApprovalContent = defineComponent({
             name: "request_user_approval",
             description:
                 "Ask the operator to approve or reject a sensitive action before continuing. " +
-            "Use this before refunds, customer-impacting account changes, escalations, deletions, or any irreversible action. " +
-            "Pass `message` as a short plain-English summary and optionally pass `context` with ticket or policy details.",
+                "Use this before refunds, customer-impacting account changes, escalations, deletions, or any irreversible action. " +
+                "Pass `message` as a short plain-English summary and optionally pass `context` with ticket or policy details.",
             handler: async ({ context, message }: ApprovalRequest) =>
                 await new Promise<ApprovalDecision>((resolve) => {
                     note.value = "";

@@ -12,18 +12,18 @@ Then use the `Workflows` section in Storybook.
 
 ## Story Map
 
-| Story | Storybook path | Why it exists |
-| --- | --- | --- |
-| Context Sharing Chat | `Workflows/Live Agent/Advanced Scenarios/State and Tools` | Verifies AG-UI shared state round-tripping between UI controls and the live agent |
-| Frontend Tools Chat | `Workflows/Live Agent/Advanced Scenarios/State and Tools` | Verifies frontend tool registration and visible side effects in a live loop |
-| Multi Thread Chat | `Workflows/Live Agent/Advanced Scenarios/Threads and Debugging` | Verifies thread isolation and continuity across concurrent conversations |
-| Agent State Inspection | `Workflows/Live Agent/Advanced Scenarios/Threads and Debugging` | Exposes low-level `useAgent` state, messages, and run transitions for debugging |
-| Sidebar And Chat Combo | `Workflows/Live Agent/Advanced Scenarios/Layout Patterns` | Validates sidebar lifecycle and integration with host app content |
-| Suggestions Demo | `Workflows/Live Agent/Advanced Scenarios/Layout Patterns` | Validates compact embedded chat layout under constrained dimensions |
-| Error Handling | `Workflows/Live Agent/Advanced Scenarios/Layout Patterns` | Validates split-pane integration with supporting host UI alongside chat |
-| Minimal Composable UI | `Workflows/Live Agent/Advanced Scenarios/Layout Patterns` | Provides a baseline full-screen dedicated assistant surface |
-| Render Tool Live | `Workflows/Live Agent/Advanced Scenarios/Tool Rendering` | Verifies live `useRenderTool` behavior for runtime-backed tool calls |
-| Approval Workflow Live | `Workflows/Live Agent/Advanced Scenarios/Human In The Loop` | Verifies that the live agent can request operator approval through a frontend tool before a sensitive action |
+| Story                  | Storybook path                                                  | Why it exists                                                                                                |
+| ---------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Context Sharing Chat   | `Workflows/Live Agent/Advanced Scenarios/State and Tools`       | Verifies AG-UI shared state round-tripping between UI controls and the live agent                            |
+| Frontend Tools Chat    | `Workflows/Live Agent/Advanced Scenarios/State and Tools`       | Verifies frontend tool registration and visible side effects in a live loop                                  |
+| Multi Thread Chat      | `Workflows/Live Agent/Advanced Scenarios/Threads and Debugging` | Verifies thread isolation and continuity across concurrent conversations                                     |
+| Agent State Inspection | `Workflows/Live Agent/Advanced Scenarios/Threads and Debugging` | Exposes low-level `useAgent` state, messages, and run transitions for debugging                              |
+| Sidebar And Chat Combo | `Workflows/Live Agent/Advanced Scenarios/Layout Patterns`       | Validates sidebar lifecycle and integration with host app content                                            |
+| Suggestions Demo       | `Workflows/Live Agent/Advanced Scenarios/Layout Patterns`       | Validates compact embedded chat layout under constrained dimensions                                          |
+| Error Handling         | `Workflows/Live Agent/Advanced Scenarios/Layout Patterns`       | Validates split-pane integration with supporting host UI alongside chat                                      |
+| Minimal Composable UI  | `Workflows/Live Agent/Advanced Scenarios/Layout Patterns`       | Provides a baseline full-screen dedicated assistant surface                                                  |
+| Render Tool Live       | `Workflows/Live Agent/Advanced Scenarios/Tool Rendering`        | Verifies live `useRenderTool` behavior for runtime-backed tool calls                                         |
+| Approval Workflow Live | `Workflows/Live Agent/Advanced Scenarios/Human In The Loop`     | Verifies that the live agent can request operator approval through a frontend tool before a sensitive action |
 
 ## Basic And Supporting Live Stories
 
@@ -65,6 +65,7 @@ All runtime-backed stories use `StoryRuntimeProvider` from `liveAgentStoryShared
 3. Add `live-agent` tags and the scenario-purpose docs description.
 4. Keep the story narrowly focused on one runtime-backed behavior.
 5. Update `WorkflowsOverview.mdx` and this document if the new story changes the navigation map.
+
 - ✅ Custom UI building
 - ✅ State inspection/debugging
 
