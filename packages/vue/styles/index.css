@@ -6,6 +6,8 @@
  * Full Tailwind-based styles are a Phase A deliverable.
  */
 
+@import "./a2ui-tool-call-renderer.css";
+
 :root {
   --copilotkit-primary: #6366f1;
   --copilotkit-primary-hover: #4f46e5;
