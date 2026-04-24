@@ -11,142 +11,273 @@
  *   stop(): Promise<Blob>
  *   dispose(): void
  */
-import { onMounted, onUnmounted, ref, watch } from "vue";
+import { onUnmounted, ref, watch } from "vue";
+import type { AudioRecorderState } from "./CopilotChatAudioRecorder.types";
 
-type RecorderState = "idle" | "recording" | "processing" | "error";
-
-const props = withDefaults(
-  defineProps<{
-    disabled?: boolean;
-    lang?: string;
-  }>(),
-  {
-    disabled: false,
-    lang: "en-US",
-  },
-);
-
-const emit = defineEmits<{
-  transcript: [text: string];
-  error: [message: string];
-  stateChange: [state: RecorderState];
-}>();
-
-const state = ref<RecorderState>("idle");
-const mediaRecorder = ref<MediaRecorder | null>(null);
-const mediaStream = ref<MediaStream | null>(null);
-const chunks = ref<Blob[]>([]);
-const startedAt = ref<number | null>(null);
-
-const isBusy = computed(() => state.value === "recording" || state.value === "processing");
-
-async function toggleRecording() {
-  if (props.disabled || state.value === "processing") {
-    return;
+/** Error subclass so callers can instanceof-guard recorder failures. */
+class AudioRecorderError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AudioRecorderError";
   }
-
-  if (state.value === "recording") {
-    stopRecording();
-    return;
-  }
-
-  await startRecording();
 }
 
-async function startRecording() {
+// ---------------------------------------------------------------------------
+// Recording state
+// ---------------------------------------------------------------------------
+const recorderState = ref<AudioRecorderState>("idle");
+const mediaRecorderRef = ref<MediaRecorder | null>(null);
+const audioChunks = ref<Blob[]>([]);
+const streamRef = ref<MediaStream | null>(null);
+const analyserRef = ref<AnalyserNode | null>(null);
+const audioContextRef = ref<AudioContext | null>(null);
+const animationIdRef = ref<number | null>(null);
+
+// Canvas and waveform visualization state
+const canvasRef = ref<HTMLCanvasElement | null>(null);
+
+// Amplitude history for scrolling waveform
+let amplitudeHistory: number[] = [];
+let scrollOffset = 0;
+let smoothedAmplitude = 0;
+let fadeOpacity = 0;
+
+// ---------------------------------------------------------------------------
+// Cleanup
+// ---------------------------------------------------------------------------
+function cleanup() {
+  if (animationIdRef.value !== null) {
+    cancelAnimationFrame(animationIdRef.value);
+    animationIdRef.value = null;
+  }
+  const mr = mediaRecorderRef.value;
+  if (mr && mr.state !== "inactive") {
+    try { mr.stop(); } catch { /* ignore */ }
+  }
+  if (streamRef.value) {
+    streamRef.value.getTracks().forEach((t) => t.stop());
+    streamRef.value = null;
+  }
+  const ac = audioContextRef.value;
+  if (ac && ac.state !== "closed") {
+    ac.close().catch(() => { /* ignore */ });
+    audioContextRef.value = null;
+  }
+  mediaRecorderRef.value = null;
+  analyserRef.value = null;
+  audioChunks.value = [];
+  amplitudeHistory = [];
+  scrollOffset = 0;
+  smoothedAmplitude = 0;
+  fadeOpacity = 0;
+}
+
+// ---------------------------------------------------------------------------
+// start()
+// ---------------------------------------------------------------------------
+async function start(): Promise<void> {
+  if (recorderState.value !== "idle") {
+    throw new AudioRecorderError("Recorder is already active");
+  }
+
   try {
-    state.value = "processing";
-    emit("stateChange", state.value);
-
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const recorder = new MediaRecorder(stream);
-    chunks.value = [];
-    startedAt.value = Date.now();
-    mediaStream.value = stream;
-    mediaRecorder.value = recorder;
+    streamRef.value = stream;
 
-    recorder.addEventListener("dataavailable", onDataAvailable);
-    recorder.addEventListener("stop", onRecorderStop);
-    recorder.start();
+    const audioContext = new AudioContext();
+    audioContextRef.value = audioContext;
+    const source = audioContext.createMediaStreamSource(stream);
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    source.connect(analyser);
+    analyserRef.value = analyser;
 
-    state.value = "recording";
-    emit("stateChange", state.value);
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : MediaRecorder.isTypeSupported("audio/mp4")
+          ? "audio/mp4"
+          : "";
+
+    const options: MediaRecorderOptions = mimeType ? { mimeType } : {};
+    const mr = new MediaRecorder(stream, options);
+    mediaRecorderRef.value = mr;
+    audioChunks.value = [];
+
+    mr.ondataavailable = (ev) => {
+      if (ev.data.size > 0) audioChunks.value.push(ev.data);
+    };
+
+    mr.start(100);
+    recorderState.value = "recording";
   } catch (error) {
-    handleError(error);
+    cleanup();
+    if (error instanceof Error && error.name === "NotAllowedError") {
+      throw new AudioRecorderError("Microphone permission denied");
+    }
+    if (error instanceof Error && error.name === "NotFoundError") {
+      throw new AudioRecorderError("No microphone found");
+    }
+    throw new AudioRecorderError(
+      error instanceof Error ? error.message : "Failed to start recording",
+    );
   }
 }
 
-function stopRecording() {
-  const recorder = mediaRecorder.value;
-  if (!recorder || recorder.state !== "recording") {
-    return;
+// ---------------------------------------------------------------------------
+// stop()
+// ---------------------------------------------------------------------------
+function stop(): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const mr = mediaRecorderRef.value;
+    if (!mr || recorderState.value !== "recording") {
+      reject(new AudioRecorderError("No active recording"));
+      return;
+    }
+
+    recorderState.value = "processing";
+
+    mr.onstop = () => {
+      const mimeType = mr.mimeType || "audio/webm";
+      const blob = new Blob(audioChunks.value, { type: mimeType });
+      cleanup();
+      recorderState.value = "idle";
+      resolve(blob);
+    };
+
+    mr.onerror = () => {
+      cleanup();
+      recorderState.value = "idle";
+      reject(new AudioRecorderError("Recording failed"));
+    };
+
+    mr.stop();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Canvas waveform drawing loop — mirrors React canvas rendering logic
+// ---------------------------------------------------------------------------
+function calculateAmplitude(dataArray: Uint8Array): number {
+  let sum = 0;
+  for (let i = 0; i < dataArray.length; i++) {
+    const sample = (dataArray[i]! / 128) - 1;
+    sum += sample * sample;
+  }
+  return Math.sqrt(sum / dataArray.length);
+}
+
+function drawFrame() {
+  const canvas = canvasRef.value;
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const barWidth = 2;
+  const barGap = 1;
+  const barSpacing = barWidth + barGap;
+  const scrollSpeed = 1 / 3;
+
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+
+  if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
   }
 
-  state.value = "processing";
-  emit("stateChange", state.value);
-  recorder.stop();
-}
+  const maxBars = Math.floor(rect.width / barSpacing) + 2;
 
-function onDataAvailable(event: BlobEvent) {
-  if (event.data && event.data.size > 0) {
-    chunks.value = [...chunks.value, event.data];
-  }
-}
+  if (analyserRef.value && recorderState.value === "recording") {
+    if (amplitudeHistory.length === 0) {
+      amplitudeHistory = new Array(maxBars).fill(0);
+    }
+    if (fadeOpacity < 1) fadeOpacity = Math.min(1, fadeOpacity + 0.03);
 
-function onRecorderStop() {
-  const durationMs = startedAt.value ? Date.now() - startedAt.value : 0;
-  const durationSeconds = Math.max(1, Math.round(durationMs / 1000));
-  const blob = new Blob(chunks.value, { type: "audio/webm" });
+    scrollOffset += scrollSpeed;
 
-  emit(
-    "transcript",
-    `Voice note captured (${durationSeconds}s, ${Math.round(blob.size / 1024)}KB).`,
-  );
+    const bufferLength = analyserRef.value.fftSize;
+    const dataArray = new Uint8Array(bufferLength);
+    analyserRef.value.getByteTimeDomainData(dataArray);
+    const rawAmplitude = calculateAmplitude(dataArray);
 
-  teardownRecorder();
-  state.value = "idle";
-  emit("stateChange", state.value);
-}
+    const attackSpeed = 0.12;
+    const decaySpeed = 0.08;
+    const speed = rawAmplitude > smoothedAmplitude ? attackSpeed : decaySpeed;
+    smoothedAmplitude += (rawAmplitude - smoothedAmplitude) * speed;
 
-function teardownRecorder() {
-  if (mediaRecorder.value) {
-    mediaRecorder.value.removeEventListener("dataavailable", onDataAvailable);
-    mediaRecorder.value.removeEventListener("stop", onRecorderStop);
-    mediaRecorder.value = null;
+    if (scrollOffset >= barSpacing) {
+      scrollOffset -= barSpacing;
+      amplitudeHistory.push(smoothedAmplitude);
+      if (amplitudeHistory.length > maxBars) {
+        amplitudeHistory = amplitudeHistory.slice(-maxBars);
+      }
+    }
   }
 
-  if (mediaStream.value) {
-    mediaStream.value.getTracks().forEach((track) => track.stop());
-    mediaStream.value = null;
+  ctx.clearRect(0, 0, rect.width, rect.height);
+
+  const computedStyle = getComputedStyle(canvas);
+  ctx.fillStyle = computedStyle.color;
+  ctx.globalAlpha = fadeOpacity;
+
+  const centerY = rect.height / 2;
+  const maxAmplitude = rect.height / 2 - 2;
+  const edgeFadeWidth = 12;
+
+  if (amplitudeHistory.length > 0) {
+    for (let i = 0; i < amplitudeHistory.length; i++) {
+      const amplitude = amplitudeHistory[i] ?? 0;
+      const scaledAmplitude = Math.min(amplitude * 4, 1);
+      const barHeight = Math.max(2, scaledAmplitude * maxAmplitude * 2);
+      const x = rect.width - (amplitudeHistory.length - i) * barSpacing - scrollOffset;
+      const y = centerY - barHeight / 2;
+
+      if (x + barWidth > 0 && x < rect.width) {
+        let edgeOpacity = 1;
+        if (x < edgeFadeWidth) {
+          edgeOpacity = Math.max(0, x / edgeFadeWidth);
+        } else if (x > rect.width - edgeFadeWidth) {
+          edgeOpacity = Math.max(0, (rect.width - x) / edgeFadeWidth);
+        }
+        ctx.globalAlpha = fadeOpacity * edgeOpacity;
+        ctx.fillRect(x, y, barWidth, barHeight);
+      }
+    }
   }
 
-  chunks.value = [];
-  startedAt.value = null;
+  animationIdRef.value = requestAnimationFrame(drawFrame);
 }
 
-function handleError(error: unknown) {
-  teardownRecorder();
-  state.value = "error";
-  emit("stateChange", state.value);
-
-  const message = error instanceof Error ? error.message : "Unable to access microphone";
-  emit("error", message);
-
-  state.value = "idle";
-  emit("stateChange", state.value);
-}
+// Restart draw loop when recorderState changes (mirrors React useEffect([recorderState]))
+watch(recorderState, () => {
+  if (animationIdRef.value !== null) {
+    cancelAnimationFrame(animationIdRef.value);
+    animationIdRef.value = null;
+  }
+  animationIdRef.value = requestAnimationFrame(drawFrame);
+}, { immediate: true });
 
 onUnmounted(() => {
-  teardownRecorder();
+  cleanup();
+});
+
+// ---------------------------------------------------------------------------
+// Imperative API — Vue equivalent of forwardRef + useImperativeHandle
+// ---------------------------------------------------------------------------
+defineExpose({
+  get state(): AudioRecorderState { return recorderState.value; },
+  start,
+  stop,
+  dispose: cleanup,
 });
 </script>
+
 <template>
-  <button class="copilotkit-audio-recorder" type="button" :disabled="disabled || state === 'processing'"
-    :aria-label="state === 'recording' ? 'Stop recording' : 'Start recording'" @click="toggleRecording">
-    <slot :state="state" :is-busy="isBusy">
-      <span v-if="state === 'recording'">Stop</span>
-      <span v-else-if="state === 'processing'">Processing...</span>
-      <span v-else>Record</span>
-    </slot>
-  </button>
+  <div class="cpk-audio-recorder" data-copilotkit>
+    <canvas ref="canvasRef" class="cpk-audio-recorder__canvas" />
+  </div>
 </template>

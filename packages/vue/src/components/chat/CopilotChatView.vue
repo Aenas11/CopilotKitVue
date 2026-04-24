@@ -25,6 +25,10 @@ const props = withDefaults(
     emptyStateComponent?: boolean; // slot activator
     headerComponent?: boolean;
     hideTextWhenCustomToolRendered?: boolean;
+    /** "input" | "transcribe" | "processing" — forwarded to CopilotChatInput */
+    inputMode?: "input" | "transcribe" | "processing";
+    /** Whether to show the mic button in the input bar */
+    showTranscription?: boolean;
   }>(),
   {
     messages: () => [],
@@ -36,6 +40,8 @@ const props = withDefaults(
     inputPlaceholder: "Ask me anything...",
     loadingMessage: "Thinking...",
     hideTextWhenCustomToolRendered: true,
+    inputMode: "input",
+    showTranscription: false,
   },
 );
 
@@ -45,6 +51,9 @@ const emit = defineEmits<{
   addFiles: [files: File[]];
   removeAttachment: [id: string];
   selectSuggestion: [suggestion: Suggestion, index: number];
+  startTranscribe: [];
+  cancelTranscribe: [];
+  finishTranscribeWithAudio: [blob: Blob];
 }>();
 
 const scrollRef = ref<HTMLDivElement | null>(null);
@@ -113,7 +122,9 @@ onMounted(() => scrollToBottom("instant"));
 
     <!-- input bar -->
     <CopilotChatInput :placeholder="inputPlaceholder" :is-running="isRunning" :attachments-enabled="attachmentsEnabled"
-      :attachments-accept="attachmentsAccept" @submit="emit('submitMessage', $event)" @stop="emit('stop')"
-      @add-files="emit('addFiles', $event)" />
+      :attachments-accept="attachmentsAccept" :mode="inputMode" :show-transcription="showTranscription"
+      @submit="emit('submitMessage', $event)" @stop="emit('stop')" @add-files="emit('addFiles', $event)"
+      @start-transcribe="emit('startTranscribe')" @cancel-transcribe="emit('cancelTranscribe')"
+      @finish-transcribe-with-audio="emit('finishTranscribeWithAudio', $event)" />
   </div>
 </template>
