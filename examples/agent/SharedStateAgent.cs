@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Collections;
@@ -32,9 +33,10 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ChatMessage? contextMessage = CreateContextMessage(options);
+        IEnumerable<ChatMessage> rehydratedMessages = await RehydrateAttachmentsAsync(messages);
         IEnumerable<ChatMessage> contextAwareMessages = contextMessage is null
-            ? messages
-            : messages.Prepend(contextMessage);
+            ? rehydratedMessages
+            : rehydratedMessages.Prepend(contextMessage);
 
         // Check if the client sent state in the request
         if (options is not ChatClientAgentRunOptions { ChatOptions.AdditionalProperties: { } properties } chatRunOptions ||
@@ -61,7 +63,7 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
         if (!hasProperties)
         {
             // Empty state - treat as no state
-            await foreach (var update in this.InnerAgent.RunStreamingAsync(messages, session, options, cancellationToken).ConfigureAwait(false))
+            await foreach (var update in this.InnerAgent.RunStreamingAsync(rehydratedMessages, session, options, cancellationToken).ConfigureAwait(false))
             {
                 yield return update;
             }
@@ -523,6 +525,159 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
             JsonValueKind.Null => null,
             _ => property.GetRawText(),
         };
+    }
+
+    // Parses the text-encoded attachment format produced by the request-normalization middleware
+    // and reconstructs proper DataContent items so the LLM receives images via the vision API.
+    private static async Task<IEnumerable<ChatMessage>> RehydrateAttachmentsAsync(IEnumerable<ChatMessage> messages)
+    {
+        List<ChatMessage> result = [];
+        foreach (ChatMessage message in messages)
+        {
+            if (message.Role != ChatRole.User)
+            {
+                result.Add(message);
+                continue;
+            }
+
+            bool hasAttachments = message.Contents
+                .OfType<TextContent>()
+                .Any(tc => tc.Text?.Contains("[attachment type=", StringComparison.Ordinal) == true);
+
+            if (!hasAttachments)
+            {
+                result.Add(message);
+                continue;
+            }
+
+            List<AIContent> newContents = [];
+            foreach (AIContent content in message.Contents)
+            {
+                if (content is TextContent textContent &&
+                    textContent.Text?.Contains("[attachment type=", StringComparison.Ordinal) == true)
+                {
+                    newContents.AddRange(await ParseAttachmentTextAsync(textContent.Text));
+                }
+                else
+                {
+                    newContents.Add(content);
+                }
+            }
+
+            result.Add(new ChatMessage(message.Role, newContents));
+        }
+        return result;
+    }
+
+    private static async Task<List<AIContent>> ParseAttachmentTextAsync(string text)
+    {
+        const string AttachOpen = "[attachment type=";
+        const string AttachClose = "[/attachment]";
+        const string B64Start = "attachment_data_base64_start\n";
+        const string B64End = "\nattachment_data_base64_end";
+
+        List<AIContent> result = [];
+        int pos = 0;
+
+        while (pos < text.Length)
+        {
+            int attachStart = text.IndexOf(AttachOpen, pos, StringComparison.Ordinal);
+            if (attachStart == -1)
+            {
+                string remaining = text[pos..].Trim();
+                if (!string.IsNullOrWhiteSpace(remaining))
+                    result.Add(new TextContent(remaining));
+                break;
+            }
+
+            string before = text[pos..attachStart].Trim();
+            if (!string.IsNullOrWhiteSpace(before))
+                result.Add(new TextContent(before));
+
+            int attachEnd = text.IndexOf(AttachClose, attachStart, StringComparison.Ordinal);
+            if (attachEnd == -1)
+            {
+                result.Add(new TextContent(text[attachStart..]));
+                break;
+            }
+
+            string block = text[attachStart..(attachEnd + AttachClose.Length)];
+
+            // Extract mimeType from header line
+            string? mimeType = null;
+            int mimeIdx = block.IndexOf("mimeType=", StringComparison.Ordinal);
+            if (mimeIdx != -1)
+            {
+                int mimeStart = mimeIdx + "mimeType=".Length;
+                int mimeEnd = block.IndexOfAny([',', '\n'], mimeStart);
+                mimeType = mimeEnd == -1 ? block[mimeStart..].Trim() : block[mimeStart..mimeEnd].Trim();
+            }
+
+            // Try to extract base64 image/document data
+            int b64StartIdx = block.IndexOf(B64Start, StringComparison.Ordinal);
+            int b64EndIdx = block.IndexOf(B64End, StringComparison.Ordinal);
+            if (b64StartIdx != -1 && b64EndIdx != -1)
+            {
+                int dataStart = b64StartIdx + B64Start.Length;
+                string base64 = block[dataStart..b64EndIdx];
+
+                // Remove truncation marker added by TruncateAttachmentPayload
+                int truncIdx = base64.IndexOf("\n[truncated ", StringComparison.Ordinal);
+                if (truncIdx != -1)
+                    base64 = base64[..truncIdx];
+
+                try
+                {
+                    byte[] bytes = Convert.FromBase64String(base64.Trim());
+                    result.Add(new DataContent(bytes, mimeType ?? "application/octet-stream"));
+                }
+                catch
+                {
+                    // Malformed base64 — fall back to raw text block
+                    result.Add(new TextContent(block));
+                }
+            }
+            else
+            {
+                // URL attachment
+                int urlIdx = block.IndexOf("attachment_url=", StringComparison.Ordinal);
+                if (urlIdx != -1)
+                {
+                    int urlStart = urlIdx + "attachment_url=".Length;
+                    int urlEnd = block.IndexOf('\n', urlStart);
+                    string url = urlEnd == -1 ? block[urlStart..].Trim() : block[urlStart..urlEnd].Trim();
+
+                    if (Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) &&
+                        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                    {
+                        // Fetch the remote URL and rehydrate as binary DataContent
+                        try
+                        {
+                            using HttpClient http = new();
+                            byte[] bytes = await http.GetByteArrayAsync(uri);
+                            result.Add(new DataContent(bytes, mimeType ?? "application/octet-stream"));
+                        }
+                        catch
+                        {
+                            // Network fetch failed — pass URL as text so the LLM knows about it
+                            result.Add(new TextContent($"[Attachment URL: {url}]"));
+                        }
+                    }
+                    else
+                    {
+                        result.Add(new TextContent($"[Attachment URL: {url}]"));
+                    }
+                }
+                else
+                {
+                    result.Add(new TextContent(block));
+                }
+            }
+
+            pos = attachEnd + AttachClose.Length;
+        }
+
+        return result;
     }
 
 }

@@ -28,6 +28,10 @@ export interface CopilotChatConfiguration {
         title?: string;
         initial?: string;
         placeholder?: string;
+        chatInputToolbarStartTranscribeButtonLabel?: string;
+        chatInputToolbarCancelTranscribeButtonLabel?: string;
+        chatInputToolbarFinishTranscribeButtonLabel?: string;
+        chatInputToolbarAddButtonLabel?: string;
         stopButtonTooltip?: string;
         regenerateResponseTooltip?: string;
         thinkingMessage?: string;

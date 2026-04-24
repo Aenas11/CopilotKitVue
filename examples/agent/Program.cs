@@ -6,14 +6,10 @@ using Microsoft.Extensions.Options;
 using OpenAI;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
-using Microsoft.Agents.AI;
-using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
-using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Options;
-using System.ComponentModel;
-using System.Text.Json.Serialization;
 using Azure.AI.Projects;
 using Azure.Identity;
+using System.Text;
+using System.Text.Json.Nodes;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +17,63 @@ builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.T
 builder.Services.AddAGUI();
 
 WebApplication app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    if (!IsJsonPost(context.Request))
+    {
+        await next();
+        return;
+    }
+
+    context.Request.EnableBuffering();
+
+    using StreamReader reader = new(context.Request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
+    string body = await reader.ReadToEndAsync();
+    context.Request.Body.Position = 0;
+
+    if (string.IsNullOrWhiteSpace(body))
+    {
+        await next();
+        return;
+    }
+
+    JsonNode? rootNode;
+    try
+    {
+        rootNode = JsonNode.Parse(body);
+    }
+    catch
+    {
+        await next();
+        return;
+    }
+
+    if (rootNode is null)
+    {
+        await next();
+        return;
+    }
+
+    bool changed = NormalizeContentArrays(rootNode);
+
+    Console.WriteLine($"[NormalizeMiddleware] path={context.Request.Path} changed={changed} bodyLength={body.Length}");
+
+    if (!changed)
+    {
+        await next();
+        return;
+    }
+
+    string normalizedBody = rootNode.ToJsonString();
+    Console.WriteLine($"[NormalizeMiddleware] normalized body (first 500): {normalizedBody[..Math.Min(500, normalizedBody.Length)]}");
+    byte[] normalizedBytes = Encoding.UTF8.GetBytes(normalizedBody);
+
+    context.Request.Body = new MemoryStream(normalizedBytes);
+    context.Request.ContentLength = normalizedBytes.Length;
+
+    await next();
+});
 
 // Create the agent factory and map the AG-UI agent endpoint
 var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
@@ -31,6 +84,106 @@ app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapAGUI("/", agentFactory.CreateAzureHostedAgent(builder.Configuration));
 
 await app.RunAsync();
+
+static bool IsJsonPost(HttpRequest request)
+{
+    return HttpMethods.IsPost(request.Method)
+        && request.ContentType?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true;
+}
+
+static string ConvertContentPartsToText(JsonArray parts)
+{
+    List<string> lines = [];
+
+    foreach (JsonNode? node in parts)
+    {
+        if (node is not JsonObject part)
+        {
+            continue;
+        }
+
+        string type = part["type"]?.GetValue<string>()?.Trim().ToLowerInvariant() ?? "unknown";
+
+        if (type == "text")
+        {
+            string? text = part["text"]?.GetValue<string>();
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                lines.Add(text.Trim());
+            }
+            continue;
+        }
+
+        JsonObject? source = part["source"] as JsonObject;
+        JsonObject? metadata = part["metadata"] as JsonObject;
+
+        string filename = metadata?["filename"]?.GetValue<string>() ?? "unknown";
+        string mimeType = source?["mimeType"]?.GetValue<string>() ?? "unknown";
+        string sourceType = source?["type"]?.GetValue<string>() ?? "unknown";
+        string? sourceValue = source?["value"]?.GetValue<string>();
+
+        lines.Add($"[attachment type={type}] filename={filename}, mimeType={mimeType}, source={sourceType}");
+
+        if (string.Equals(sourceType, "url", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(sourceValue))
+        {
+            lines.Add($"attachment_url={sourceValue}");
+            lines.Add("[/attachment]");
+            continue;
+        }
+
+        if (!string.IsNullOrWhiteSpace(sourceValue))
+        {
+            lines.Add($"attachment_data_base64_length={sourceValue.Length}");
+            lines.Add("attachment_data_base64_start");
+            lines.Add(sourceValue);
+            lines.Add("attachment_data_base64_end");
+        }
+
+        lines.Add("[/attachment]");
+    }
+
+    return string.Join("\n", lines);
+}
+
+
+static bool NormalizeContentArrays(JsonNode node)
+{
+    bool changed = false;
+
+    if (node is JsonObject obj)
+    {
+        if (obj["content"] is JsonArray contentParts)
+        {
+            obj["content"] = ConvertContentPartsToText(contentParts);
+            changed = true;
+        }
+
+        foreach ((string _, JsonNode? child) in obj)
+        {
+            if (child is null)
+            {
+                continue;
+            }
+
+            changed = NormalizeContentArrays(child) || changed;
+        }
+    }
+    else if (node is JsonArray arr)
+    {
+        for (int i = 0; i < arr.Count; i++)
+        {
+            JsonNode? child = arr[i];
+            if (child is null)
+            {
+                continue;
+            }
+
+            changed = NormalizeContentArrays(child) || changed;
+        }
+    }
+
+    return changed;
+}
 
 // =================
 // State Management

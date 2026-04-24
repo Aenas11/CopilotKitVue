@@ -6,9 +6,11 @@
 import { ref, watch, nextTick, onMounted } from "vue";
 import type { Message } from "@ag-ui/client";
 import type { Suggestion } from "@copilotkit/core";
+import type { Attachment } from "../../composables/useAttachments";
 import CopilotChatMessageView from "./CopilotChatMessageView.vue";
 import CopilotChatInput from "./CopilotChatInput.vue";
 import CopilotChatSuggestionView from "./CopilotChatSuggestionView.vue";
+import CopilotChatAttachmentQueue from "./CopilotChatAttachmentQueue.vue";
 
 const props = withDefaults(
   defineProps<{
@@ -16,25 +18,42 @@ const props = withDefaults(
     isRunning?: boolean;
     suggestions?: Suggestion[];
     inputPlaceholder?: string;
+    attachments?: Attachment[];
+    attachmentsEnabled?: boolean;
+    attachmentsAccept?: string;
     loadingMessage?: string;
     emptyStateComponent?: boolean; // slot activator
     headerComponent?: boolean;
     hideTextWhenCustomToolRendered?: boolean;
+    /** "input" | "transcribe" | "processing" — forwarded to CopilotChatInput */
+    inputMode?: "input" | "transcribe" | "processing";
+    /** Whether to show the mic button in the input bar */
+    showTranscription?: boolean;
   }>(),
   {
     messages: () => [],
     isRunning: false,
     suggestions: () => [],
+    attachments: () => [],
+    attachmentsEnabled: false,
+    attachmentsAccept: "*/*",
     inputPlaceholder: "Ask me anything...",
     loadingMessage: "Thinking...",
     hideTextWhenCustomToolRendered: true,
+    inputMode: "input",
+    showTranscription: false,
   },
 );
 
 const emit = defineEmits<{
   submitMessage: [text: string];
   stop: [];
+  addFiles: [files: File[]];
+  removeAttachment: [id: string];
   selectSuggestion: [suggestion: Suggestion, index: number];
+  startTranscribe: [];
+  cancelTranscribe: [];
+  finishTranscribeWithAudio: [blob: Blob];
 }>();
 
 const scrollRef = ref<HTMLDivElement | null>(null);
@@ -81,7 +100,7 @@ onMounted(() => scrollToBottom("instant"));
           </slot>
         </div>
 
-        <CopilotChatMessageView :messages="messages" :is-running="isRunning"
+        <CopilotChatMessageView v-else :messages="messages" :is-running="isRunning"
           :hide-text-when-custom-tool-rendered="hideTextWhenCustomToolRendered" />
       </div>
 
@@ -99,8 +118,13 @@ onMounted(() => scrollToBottom("instant"));
     <CopilotChatSuggestionView :suggestions="suggestions"
       @select-suggestion="(suggestion, index) => emit('selectSuggestion', suggestion, index)" />
 
+    <CopilotChatAttachmentQueue :attachments="attachments" @remove="emit('removeAttachment', $event)" />
+
     <!-- input bar -->
-    <CopilotChatInput :placeholder="inputPlaceholder" :is-running="isRunning" @submit="emit('submitMessage', $event)"
-      @stop="emit('stop')" />
+    <CopilotChatInput :placeholder="inputPlaceholder" :is-running="isRunning" :attachments-enabled="attachmentsEnabled"
+      :attachments-accept="attachmentsAccept" :mode="inputMode" :show-transcription="showTranscription"
+      @submit="emit('submitMessage', $event)" @stop="emit('stop')" @add-files="emit('addFiles', $event)"
+      @start-transcribe="emit('startTranscribe')" @cancel-transcribe="emit('cancelTranscribe')"
+      @finish-transcribe-with-audio="emit('finishTranscribeWithAudio', $event)" />
   </div>
 </template>

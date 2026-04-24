@@ -1,0 +1,24 @@
+html,
+body,
+#storybook-root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Storybook canvas wrappers in fullscreen stories */
+.sb-show-main,
+.sb-main-padded,
+.sb-main-centered,
+.sb-main-fullscreen {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Prevent phantom outer scrollbar in the Storybook iframe shell. */
+body {
+    overflow: hidden;
+}

@@ -11,8 +11,8 @@ export interface UseCopilotChatOptions extends UseAgentOptions {
 export interface UseCopilotChatReturn {
   /** Reactive array of conversation messages. */
   messages: ReturnType<typeof shallowRef<Message[]>>;
-  /** Send a new user message. Returns when the run completes. */
-  sendMessage(text: string): Promise<void>;
+  /** Send a new user message (text or structured content). Returns when the run completes. */
+  sendMessage(content: Message["content"]): Promise<void>;
   /** Stop the current run (if active). */
   stop(): void;
   /** Reload (re-run) the last user message. */
@@ -82,7 +82,7 @@ export function useCopilotChat(
     }
   }
 
-  async function sendMessage(text: string): Promise<void> {
+  async function sendMessage(content: Message["content"]): Promise<void> {
     error.value = null;
     const resolved = agent.value;
     if (!resolved) {
@@ -102,11 +102,17 @@ export function useCopilotChat(
       console.warn("[CopilotKit] sendMessage called before agent resolved.");
       return;
     }
+
+    const isTextContent = typeof content === "string";
+    if (isTextContent && content.trim().length === 0) {
+      return;
+    }
+
     try {
       // Append user message to the agent's message list, then run
       resolvedAgent.messages = [
         ...(resolvedAgent.messages ?? []),
-        { role: "user", content: text, id: crypto.randomUUID?.() ?? `msg-${Date.now()}` } as Message,
+        { role: "user", content, id: crypto.randomUUID?.() ?? `msg-${Date.now()}` } as Message,
       ];
       (messages as { value: Message[] }).value = [...(resolvedAgent.messages ?? [])];
       triggerRef(messages);
