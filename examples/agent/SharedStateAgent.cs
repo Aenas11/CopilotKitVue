@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Collections;
@@ -32,7 +33,7 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ChatMessage? contextMessage = CreateContextMessage(options);
-        IEnumerable<ChatMessage> rehydratedMessages = RehydrateAttachments(messages);
+        IEnumerable<ChatMessage> rehydratedMessages = await RehydrateAttachmentsAsync(messages);
         IEnumerable<ChatMessage> contextAwareMessages = contextMessage is null
             ? rehydratedMessages
             : rehydratedMessages.Prepend(contextMessage);
@@ -528,13 +529,14 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
 
     // Parses the text-encoded attachment format produced by the request-normalization middleware
     // and reconstructs proper DataContent items so the LLM receives images via the vision API.
-    private static IEnumerable<ChatMessage> RehydrateAttachments(IEnumerable<ChatMessage> messages)
+    private static async Task<IEnumerable<ChatMessage>> RehydrateAttachmentsAsync(IEnumerable<ChatMessage> messages)
     {
+        List<ChatMessage> result = [];
         foreach (ChatMessage message in messages)
         {
             if (message.Role != ChatRole.User)
             {
-                yield return message;
+                result.Add(message);
                 continue;
             }
 
@@ -544,7 +546,7 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
 
             if (!hasAttachments)
             {
-                yield return message;
+                result.Add(message);
                 continue;
             }
 
@@ -554,7 +556,7 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
                 if (content is TextContent textContent &&
                     textContent.Text?.Contains("[attachment type=", StringComparison.Ordinal) == true)
                 {
-                    newContents.AddRange(ParseAttachmentText(textContent.Text));
+                    newContents.AddRange(await ParseAttachmentTextAsync(textContent.Text));
                 }
                 else
                 {
@@ -562,11 +564,12 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
                 }
             }
 
-            yield return new ChatMessage(message.Role, newContents);
+            result.Add(new ChatMessage(message.Role, newContents));
         }
+        return result;
     }
 
-    private static IEnumerable<AIContent> ParseAttachmentText(string text)
+    private static async Task<List<AIContent>> ParseAttachmentTextAsync(string text)
     {
         const string AttachOpen = "[attachment type=";
         const string AttachClose = "[/attachment]";
@@ -643,10 +646,27 @@ internal sealed class SharedStateAgent : DelegatingAIAgent
                     int urlStart = urlIdx + "attachment_url=".Length;
                     int urlEnd = block.IndexOf('\n', urlStart);
                     string url = urlEnd == -1 ? block[urlStart..].Trim() : block[urlStart..urlEnd].Trim();
-                    if (Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
-                        result.Add(new DataContent(uri, mimeType ?? "application/octet-stream"));
+
+                    if (Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) &&
+                        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                    {
+                        // Fetch the remote URL and rehydrate as binary DataContent
+                        try
+                        {
+                            using HttpClient http = new();
+                            byte[] bytes = await http.GetByteArrayAsync(uri);
+                            result.Add(new DataContent(bytes, mimeType ?? "application/octet-stream"));
+                        }
+                        catch
+                        {
+                            // Network fetch failed — pass URL as text so the LLM knows about it
+                            result.Add(new TextContent($"[Attachment URL: {url}]"));
+                        }
+                    }
                     else
-                        result.Add(new TextContent(block));
+                    {
+                        result.Add(new TextContent($"[Attachment URL: {url}]"));
+                    }
                 }
                 else
                 {

@@ -135,7 +135,7 @@ static string ConvertContentPartsToText(JsonArray parts)
         {
             lines.Add($"attachment_data_base64_length={sourceValue.Length}");
             lines.Add("attachment_data_base64_start");
-            lines.Add(TruncateAttachmentPayload(sourceValue));
+            lines.Add(sourceValue);
             lines.Add("attachment_data_base64_end");
         }
 
@@ -145,17 +145,6 @@ static string ConvertContentPartsToText(JsonArray parts)
     return string.Join("\n", lines);
 }
 
-static string TruncateAttachmentPayload(string payload)
-{
-    const int MaxChars = 24000;
-    if (payload.Length <= MaxChars)
-    {
-        return payload;
-    }
-
-    int omitted = payload.Length - MaxChars;
-    return payload[..MaxChars] + $"\n[truncated {omitted} chars]";
-}
 
 static bool NormalizeContentArrays(JsonNode node)
 {

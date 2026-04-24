@@ -1,6 +1,17 @@
 <script setup lang="ts">
-/** CopilotChatAudioRecorder — voice input button. Phase C. */
-import { computed, onUnmounted, ref } from "vue";
+/**
+ * CopilotChatAudioRecorder — canvas waveform recorder component.
+ *
+ * Mirrors the React CopilotChatAudioRecorder: canvas-based waveform
+ * visualization, imperative API via defineExpose().
+ *
+ * Exposed API (use templateRef to call):
+ *   state: AudioRecorderState
+ *   start(): Promise<void>
+ *   stop(): Promise<Blob>
+ *   dispose(): void
+ */
+import { onMounted, onUnmounted, ref, watch } from "vue";
 
 type RecorderState = "idle" | "recording" | "processing" | "error";
 

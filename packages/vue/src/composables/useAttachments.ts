@@ -129,8 +129,31 @@ async function normalizeUploadResult(
   }
 
   if (uploaded.type === "url") {
+    const mimeType = uploaded.mimeType || file.type || "application/octet-stream";
+    // blob: URLs are browser-local object URLs — the server cannot resolve them.
+    // Fetch the blob and convert to base64 so the payload always arrives as data.
+    if (uploaded.value.startsWith("blob:")) {
+      try {
+        const response = await fetch(uploaded.value);
+        const blob = await response.blob();
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            const comma = result.indexOf(",");
+            resolve(comma >= 0 ? result.slice(comma + 1) : result);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        return { mimeType, data: base64, metadata: uploaded.metadata };
+      } catch {
+        // Fall back to raw base64 read from the original file
+        return { mimeType, data: await readFileAsBase64(file), metadata: uploaded.metadata };
+      }
+    }
     return {
-      mimeType: uploaded.mimeType || file.type || "application/octet-stream",
+      mimeType,
       url: uploaded.value,
       metadata: uploaded.metadata,
     };
