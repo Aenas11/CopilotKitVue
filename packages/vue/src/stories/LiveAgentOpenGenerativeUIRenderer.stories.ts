@@ -7,7 +7,7 @@ import { useRenderTool } from "../composables/useRenderTool";
 import { StoryRuntimeProvider, liveAgentAdvancedParameters, liveAgentPurposeDecorator } from "./liveAgentStoryShared";
 
 const meta = {
-    title: "Workflows/Live Agent/Phase C/Open Generative UI Renderer",
+    title: "Workflows/Live Agent/Phase C/Open Generative UI - Agent Tool Integration",
     tags: ["live-agent", "advanced", "autodocs"],
     decorators: [liveAgentPurposeDecorator],
     parameters: liveAgentAdvancedParameters,
@@ -151,11 +151,19 @@ document.body.dataset.oguiInteractive = "true";
         <div style="display:grid;gap:6px;">
           <h3 style="margin:0;font-size:15px;">Live Agent Component Rendering</h3>
           <p style="margin:0;font-size:12px;color:#475569;line-height:1.45;">
-            This story focuses on agent-driven component rendering in chat. The left panel configures prompts; the right chat shows tool-rendered Open Generative UI cards.
+            This story validates the full agent-tool flow: the model chooses a frontend tool, emits args, and chat renders the resulting Open Generative UI card.
           </p>
           <p style="margin:0;font-size:12px;color:#475569;line-height:1.45;">
-            Ask the assistant to schedule an event and render the preview card via the registered tool.
+            Use this story when testing tool registration, arg extraction, streaming updates, and final rendered output in live chat.
           </p>
+        </div>
+
+        <div style="display:grid;gap:8px;padding:12px;border:1px solid #fde68a;border-radius:12px;background:#fffbeb;">
+          <div style="font-size:12px;font-weight:600;color:#92400e;">How this differs from "OGUI Tool Renderer" story</div>
+          <div style="font-size:12px;color:#78350f;line-height:1.45;">
+            This one is <strong>agent-first integration</strong>: the renderer output depends on real tool-call messages in chat.
+            The "OGUI Tool Renderer" story is a <strong>direct payload harness</strong> that bypasses tool-call registration and model behavior.
+          </div>
         </div>
 
         <div style="display:grid;gap:8px;padding:12px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;">
@@ -209,7 +217,7 @@ export const SandboxedIframeLive: Story = {
         docs: {
             description: {
                 story:
-                    "Agent-first live scenario for Open Generative UI component rendering. Focuses on how agent tool calls map into rendered UI cards in chat, including handling streaming args and finalized tool results.",
+                    "Agent-first live scenario for Open Generative UI component rendering. Use this to verify end-to-end tool integration: frontend tool registration, model tool-call args, streamed updates, and finalized card rendering in chat. If you only need to validate static payload-to-UI mapping, use the separate OGUI Tool Renderer story.",
             },
         },
     },

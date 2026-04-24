@@ -1,15 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/vue3-vite";
 import { defineComponent, ref } from "vue";
-import CopilotChat from "../components/chat/CopilotChat.vue";
 import OpenGenerativeUIToolRenderer from "../components/tools/OpenGenerativeUIToolRenderer.vue";
-import { StoryRuntimeProvider, liveAgentAdvancedParameters, liveAgentPurposeDecorator } from "./liveAgentStoryShared";
 
 const meta = {
-    title: "Workflows/Live Agent/Phase C/Open Generative UI Tool Renderer",
-    tags: ["live-agent", "advanced", "autodocs"],
-    decorators: [liveAgentPurposeDecorator],
-    parameters: liveAgentAdvancedParameters,
-} satisfies Meta;
+    title: "Components/Tools/OpenGenerativeUIToolRenderer Harness",
+    tags: ["advanced", "autodocs"],
+    parameters: {
+        layout: "fullscreen",
+    },
+} satisfies Meta<typeof OpenGenerativeUIToolRenderer>;
 
 export default meta;
 
@@ -17,7 +16,7 @@ type Story = StoryObj<typeof meta>;
 
 const OGUIToolRendererLiveContent = defineComponent({
     name: "OGUIToolRendererLiveContent",
-    components: { CopilotChat, OpenGenerativeUIToolRenderer },
+    components: { OpenGenerativeUIToolRenderer },
     setup() {
         const payload = ref({
             title: "Generated Risk Summary",
@@ -57,41 +56,40 @@ const OGUIToolRendererLiveContent = defineComponent({
       <aside style="border-right:1px solid #e2e8f0;background:#f8fafc;padding:14px 12px;display:flex;flex-direction:column;gap:10px;">
         <h3 style="margin:0;font-size:15px;">OpenGenerativeUIToolRenderer</h3>
         <p style="margin:0;font-size:12px;color:#475569;line-height:1.45;">
-          Dedicated tool payload renderer for Open Generative UI with normalized defaults.
+          Dedicated payload harness for OpenGenerativeUIToolRenderer with normalized defaults.
         </p>
+        <p style="margin:0;font-size:12px;color:#475569;line-height:1.45;">
+          Use this story when validating payload-to-UI mapping only. It does not mount CopilotChat, does not register tools, and does not require runtime or agent responses.
+        </p>
+        <div style="padding:10px;border:1px solid #fde68a;border-radius:10px;background:#fffbeb;color:#78350f;font-size:12px;line-height:1.45;">
+          Need end-to-end agent behavior? Use <strong>Workflows/Live Agent/Phase C/Open Generative UI - Agent Tool Integration</strong> instead.
+        </div>
         <OpenGenerativeUIToolRenderer :payload="payload" />
       </aside>
 
       <main style="min-width:0;">
-        <CopilotChat
-          agent-id="my_agent"
-          :labels="{ title: 'Live Agent + OGUI Tool Renderer', placeholder: 'Ask to update risk summary UI...' }"
-        />
+        <div style="padding:20px;display:grid;gap:12px;align-content:start;">
+          <h3 style="margin:0;font-size:16px;color:#0f172a;">Deterministic Harness</h3>
+          <p style="margin:0;font-size:13px;color:#475569;line-height:1.5;max-width:720px;">
+            Right panel intentionally avoids live chat/runtime integration. Edit payload values in this file to verify normalization and rendering behavior deterministically.
+          </p>
+        </div>
       </main>
     </div>
   `,
 });
 
-export const ToolPayloadLive: Story = {
+export const ToolPayloadHarness: Story = {
     parameters: {
         docs: {
             description: {
                 story:
-                    "Why needed: validates OpenGenerativeUIToolRenderer payload normalization and rendering behavior in a live runtime-backed page.",
+                    "Why needed: component-level validation of OpenGenerativeUIToolRenderer payload normalization and rendering in isolation. This harness is deterministic and does not involve CopilotChat, tool registration, model tool-choice, or runtime transport.",
             },
         },
     },
     render: () => ({
-        components: { StoryRuntimeProvider, OGUIToolRendererLiveContent },
-        data() {
-            return {
-                threadId: `story-phase-c-ogui-tool-${Date.now()}`,
-            };
-        },
-        template: `
-      <StoryRuntimeProvider runtime-url="/api/copilotkit" :thread-id="threadId">
-        <OGUIToolRendererLiveContent />
-      </StoryRuntimeProvider>
-    `,
+        components: { OGUIToolRendererLiveContent },
+        template: `<OGUIToolRendererLiveContent />`,
     }),
 };
