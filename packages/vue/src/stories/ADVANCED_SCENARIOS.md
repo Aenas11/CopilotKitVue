@@ -10,6 +10,22 @@ pnpm --dir ./packages/vue run storybook:dev
 
 Then use the `Workflows` section in Storybook.
 
+## How Live Stories Work With The Agent
+
+- Story UI runs in Storybook at `http://localhost:6006`.
+- Every live story mounts `StoryRuntimeProvider`, which creates `CopilotKitCore` pointing to `/api/copilotkit`.
+- Storybook proxies `/api/copilotkit` to the local runtime at `http://localhost:4000`.
+- The runtime forwards to the real examples agent (`my_agent`) at `http://localhost:8000`.
+- Result: when you send a message in a live story, you are exercising real runtime + real agent behavior (not mocked transport).
+
+## Quick User Guidance
+
+1. Start stack: `pnpm --dir ./packages/vue run storybook:dev`.
+2. Open any story under `Workflows/Live Agent`.
+3. Send one of the suggested prompts listed in the story panel.
+4. Confirm both chat response and scenario-specific UI behavior (thread switch, tool rendering, attachment queue, etc.).
+5. If no response appears, verify runtime (4000) and agent (8000) are both running.
+
 ## Story Map
 
 | Story                  | Storybook path                                                  | Why it exists                                                                                                |
@@ -44,6 +60,28 @@ packages/vue/src/stories/
 ├── LiveAgentRenderTool.stories.ts
 └── liveAgentStoryShared.ts
 ```
+
+## Phase C Dedicated Live Stories
+
+The following files provide dedicated runtime-backed coverage for Phase C surfaces. Each file focuses on one component/composable area.
+
+```text
+packages/vue/src/stories/
+├── LiveAgentUseAttachments.stories.ts
+├── LiveAgentAttachmentQueue.stories.ts
+├── LiveAgentAttachmentRenderer.stories.ts
+├── LiveAgentAudioRecorder.stories.ts
+├── LiveAgentUseThreads.stories.ts
+├── LiveAgentMCPAppsActivityRenderer.stories.ts
+├── LiveAgentOpenGenerativeUIRenderer.stories.ts
+└── LiveAgentOpenGenerativeUIToolRenderer.stories.ts
+```
+
+Notes:
+
+- All stories use `StoryRuntimeProvider` and are intended to run with `pnpm --dir ./packages/vue run storybook:dev`.
+- `LiveAgentUseThreads.stories.ts` includes a platform-gated CRUD scenario. Local examples runtime may return `422` for Threads API endpoints; this is expected outside Intelligence platform environments.
+- `LiveAgentUseAttachments.stories.ts` demonstrates the composable-level queue pattern; the base `CopilotChat` component now also supports integrated attachment add/remove/send flow directly in chat input.
 
 ## Shared Live Story Pattern
 

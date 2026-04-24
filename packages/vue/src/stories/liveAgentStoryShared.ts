@@ -50,7 +50,9 @@ export const liveAgentPurposeDecorator: Decorator = (story, context) => {
     const renderedStory = story();
     const storyDescription = context.parameters?.docs?.description?.story;
     const purposeText = typeof storyDescription === "string" ? storyDescription : "";
+    const isLiveStory = Array.isArray(context.tags) && context.tags.includes("live-agent");
     const showPurpose = context.viewMode === "story" && purposeText.length > 0;
+    const showHowToUse = context.viewMode === "story" && isLiveStory;
 
     return {
         components: {
@@ -67,6 +69,7 @@ export const liveAgentPurposeDecorator: Decorator = (story, context) => {
                 dismiss,
                 dismissed,
                 purposeText,
+                showHowToUse,
                 showPurpose,
             };
         },

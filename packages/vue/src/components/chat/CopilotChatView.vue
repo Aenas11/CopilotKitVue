@@ -6,9 +6,11 @@
 import { ref, watch, nextTick, onMounted } from "vue";
 import type { Message } from "@ag-ui/client";
 import type { Suggestion } from "@copilotkit/core";
+import type { Attachment } from "../../composables/useAttachments";
 import CopilotChatMessageView from "./CopilotChatMessageView.vue";
 import CopilotChatInput from "./CopilotChatInput.vue";
 import CopilotChatSuggestionView from "./CopilotChatSuggestionView.vue";
+import CopilotChatAttachmentQueue from "./CopilotChatAttachmentQueue.vue";
 
 const props = withDefaults(
   defineProps<{
@@ -16,6 +18,9 @@ const props = withDefaults(
     isRunning?: boolean;
     suggestions?: Suggestion[];
     inputPlaceholder?: string;
+    attachments?: Attachment[];
+    attachmentsEnabled?: boolean;
+    attachmentsAccept?: string;
     loadingMessage?: string;
     emptyStateComponent?: boolean; // slot activator
     headerComponent?: boolean;
@@ -25,6 +30,9 @@ const props = withDefaults(
     messages: () => [],
     isRunning: false,
     suggestions: () => [],
+    attachments: () => [],
+    attachmentsEnabled: false,
+    attachmentsAccept: "*/*",
     inputPlaceholder: "Ask me anything...",
     loadingMessage: "Thinking...",
     hideTextWhenCustomToolRendered: true,
@@ -34,6 +42,8 @@ const props = withDefaults(
 const emit = defineEmits<{
   submitMessage: [text: string];
   stop: [];
+  addFiles: [files: File[]];
+  removeAttachment: [id: string];
   selectSuggestion: [suggestion: Suggestion, index: number];
 }>();
 
@@ -99,8 +109,11 @@ onMounted(() => scrollToBottom("instant"));
     <CopilotChatSuggestionView :suggestions="suggestions"
       @select-suggestion="(suggestion, index) => emit('selectSuggestion', suggestion, index)" />
 
+    <CopilotChatAttachmentQueue :attachments="attachments" @remove="emit('removeAttachment', $event)" />
+
     <!-- input bar -->
-    <CopilotChatInput :placeholder="inputPlaceholder" :is-running="isRunning" @submit="emit('submitMessage', $event)"
-      @stop="emit('stop')" />
+    <CopilotChatInput :placeholder="inputPlaceholder" :is-running="isRunning" :attachments-enabled="attachmentsEnabled"
+      :attachments-accept="attachmentsAccept" @submit="emit('submitMessage', $event)" @stop="emit('stop')"
+      @add-files="emit('addFiles', $event)" />
   </div>
 </template>

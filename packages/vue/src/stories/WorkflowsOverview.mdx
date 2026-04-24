@@ -21,3 +21,11 @@ Use the `Workflows` section for runtime-backed and agent-backed flows.
 - `Basics` covers the shortest live chat and sidebar smoke paths.
 - `Advanced Scenarios` is split into themed groups for state, threading, layouts, tool rendering, and human approval flows.
 - `Checklist` is the manual pass-fail guide for the live stack.
+
+## How It Connects To The Agent
+
+1. Storybook UI calls `/api/copilotkit`.
+2. Storybook proxy forwards to local runtime at `http://localhost:4000`.
+3. Runtime forwards to examples agent (`my_agent`) at `http://localhost:8000`.
+
+This means workflow stories validate real runtime + agent behavior, not only local component state.

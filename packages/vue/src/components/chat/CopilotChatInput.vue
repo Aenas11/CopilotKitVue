@@ -12,23 +12,29 @@ const props = withDefaults(
     disabled?: boolean;
     isRunning?: boolean;
     autoFocus?: boolean;
+    attachmentsEnabled?: boolean;
+    attachmentsAccept?: string;
   }>(),
   {
     placeholder: "Ask me anything...",
     disabled: false,
     isRunning: false,
     autoFocus: false,
+    attachmentsEnabled: false,
+    attachmentsAccept: "*/*",
   },
 );
 
 const emit = defineEmits<{
   "update:modelValue": [value: string];
   submit: [value: string];
+  addFiles: [files: File[]];
   stop: [];
 }>();
 
 const internalValue = ref("");
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
+const fileInputRef = ref<HTMLInputElement | null>(null);
 
 const value = computed({
   get() {
@@ -64,6 +70,19 @@ function handleSendClick() {
   else send();
 }
 
+function handleAddFileClick() {
+  fileInputRef.value?.click();
+}
+
+function handleFileInput(event: Event) {
+  const target = event.target as HTMLInputElement;
+  const files = Array.from(target.files ?? []);
+  if (files.length > 0) {
+    emit("addFiles", files);
+  }
+  target.value = "";
+}
+
 function autoResize(e: Event) {
   const ta = e.target as HTMLTextAreaElement;
   ta.style.height = "auto";
@@ -73,6 +92,14 @@ function autoResize(e: Event) {
 
 <template>
   <div class="cpk-input" data-copilotkit>
+    <input ref="fileInputRef" type="file" class="cpk-input__file" :accept="attachmentsAccept" multiple
+      @change="handleFileInput">
+
+    <button v-if="attachmentsEnabled" class="cpk-input__attach" type="button" aria-label="Add attachment"
+      title="Add attachment" @click="handleAddFileClick">
+      +
+    </button>
+
     <textarea ref="textareaRef" v-model="value" class="cpk-input__textarea" :placeholder="placeholder"
       :disabled="disabled" :autofocus="autoFocus" rows="1" @keydown="handleKeyDown" @input="autoResize" />
     <button class="cpk-input__send" type="button" :disabled="isRunning ? false : !canSend || disabled"

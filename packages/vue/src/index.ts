@@ -198,6 +198,8 @@ export type CopilotPopupViewProps = PropsOf<typeof CopilotPopupView>;
 export { default as A2UIToolCallRenderer } from "./components/tools/A2UIToolCallRenderer.vue";
 export { default as WildcardToolCallRender } from "./components/tools/WildcardToolCallRender.vue";
 export { default as MCPAppsActivityRenderer } from "./components/tools/MCPAppsActivityRenderer.vue";
+export { default as OpenGenerativeUIRenderer } from "./components/tools/OpenGenerativeUIRenderer.vue";
+export { default as OpenGenerativeUIToolRenderer } from "./components/tools/OpenGenerativeUIToolRenderer.vue";
 
 export interface ToolsMenuItem {
   id?: string;
