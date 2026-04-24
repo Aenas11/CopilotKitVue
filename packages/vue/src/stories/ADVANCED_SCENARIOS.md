@@ -61,9 +61,9 @@ packages/vue/src/stories/
 └── liveAgentStoryShared.ts
 ```
 
-## Phase C Dedicated Live Stories
+## Phase C Dedicated Stories
 
-The following files provide dedicated runtime-backed coverage for Phase C surfaces. Each file focuses on one component/composable area.
+The following files provide dedicated coverage for Phase C surfaces. Most are runtime-backed live stories, and one is a deterministic component harness.
 
 ```text
 packages/vue/src/stories/
@@ -74,15 +74,27 @@ packages/vue/src/stories/
 ├── LiveAgentUseThreads.stories.ts
 ├── LiveAgentMCPAppsActivityRenderer.stories.ts
 ├── LiveAgentOpenGenerativeUIRenderer.stories.ts
-└── LiveAgentOpenGenerativeUIToolRenderer.stories.ts
+└── OpenGenerativeUIToolRendererHarness.stories.ts
 ```
 
 Notes:
 
-- All stories use `StoryRuntimeProvider` and are intended to run with `pnpm --dir ./packages/vue run storybook:dev`.
+- Runtime-backed stories use `StoryRuntimeProvider` and are intended to run with `pnpm --dir ./packages/vue run storybook:dev`.
+- `OpenGenerativeUIToolRendererHarness.stories.ts` is deterministic by design and does not mount runtime or agent integrations.
 - `LiveAgentUseThreads.stories.ts` includes a platform-gated CRUD scenario. Local examples runtime may return `422` for Threads API endpoints; this is expected outside Intelligence platform environments.
 - `LiveAgentUseAttachments.stories.ts` demonstrates the composable-level queue pattern; the base `CopilotChat` component now also supports integrated attachment add/remove/send flow directly in chat input.
-- Technical debt: `LiveAgentAudioRecorder.stories.ts` currently relies on an OpenAI-compatible runtime transcription path. Azure Foundry + Microsoft Agent Framework-native transcription alignment is planned for a follow-up.
+- `LiveAgentAudioRecorder.stories.ts` uses a runtime-agnostic transcription contract: `POST ${runtimeUrl}/transcribe` with multipart audio input and `{ text: string }` response.
+
+### Phase C Status
+
+- Status: complete.
+- Coverage split:
+  - Runtime-backed Phase C validation lives in `LiveAgent*.stories.ts` files listed above.
+  - Deterministic payload harness coverage lives in `OpenGenerativeUIToolRendererHarness.stories.ts`.
+- Baseline validation commands:
+  - `pnpm --dir ./packages/vue run check-types`
+  - `pnpm --dir ./packages/vue run test:stories`
+- Live-agent runtime verification remains available via manual Storybook runs under `Workflows/Live Agent/Phase C`.
 
 ## Shared Live Story Pattern
 

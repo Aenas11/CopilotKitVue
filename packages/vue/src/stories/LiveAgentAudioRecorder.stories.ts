@@ -30,11 +30,10 @@ type Story = StoryObj<typeof meta>;
  *   - `MediaRecorder` is available in the browser (Chrome/Edge/Firefox)
  *   - A runtimeUrl is configured in the provider (transcription endpoint)
  *
- * TECHNICAL DEBT:
- *   - Transcription currently depends on runtime-side OpenAI-compatible wiring.
- *   - Foundry + Microsoft Agent Framework-only deployments may require a
- *     dedicated Azure-native transcription service integration.
- *   - This will be aligned in a follow-up task.
+ * Runtime contract:
+ *   - CopilotChat posts audio to `${runtimeUrl}/transcribe` as multipart form data.
+ *   - Any backend implementing this endpoint and returning `{ text: string }`
+ *     works with this integrated flow.
  */
 const AudioRecorderIntegratedContent = defineComponent({
     name: "AudioRecorderIntegratedContent",
@@ -63,7 +62,7 @@ export const VoiceInputIntegrated: Story = {
         docs: {
             description: {
                 story:
-                    "Validates the integrated voice input pipeline: mic button inside the input bar → canvas waveform → transcription API → auto-submitted message. Matches the React CopilotChatInput architecture where the recorder lives inside the input, not as a separate sidebar component. Technical debt: transcription is currently wired through an OpenAI-compatible runtime path and will be aligned with Azure Foundry + Microsoft Agent Framework-native transcription in a follow-up.",
+                    "Validates the integrated voice input pipeline: mic button inside the input bar → canvas waveform → transcription API → auto-submitted message. Matches the React CopilotChatInput architecture where the recorder lives inside the input, not as a separate sidebar component. Runtime contract: the provider runtime must expose `${runtimeUrl}/transcribe` and return `{ text: string }`.",
             },
         },
     },
