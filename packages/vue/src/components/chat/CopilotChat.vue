@@ -55,10 +55,12 @@ const attachmentsAccept = computed(() => props.attachments?.accept ?? "*/*");
 // Transcription state machine — mirrors React CopilotChat transcribeMode
 // ---------------------------------------------------------------------------
 
-/** Whether the runtime supports audio transcription (runtimeUrl configured). */
-const showTranscription = computed(
-  () => typeof MediaRecorder !== "undefined" && !!(context?.copilotkit.runtimeUrl),
-);
+/** Whether runtime and browser both support audio transcription. Mirrors React gating. */
+const showTranscription = computed(() => {
+  const isMediaRecorderSupported = typeof MediaRecorder !== "undefined";
+  const isTranscriptionEnabled = context?.copilotkit.audioFileTranscriptionEnabled ?? false;
+  return isTranscriptionEnabled && isMediaRecorderSupported;
+});
 
 type InputMode = "input" | "transcribe" | "processing";
 const inputMode = ref<InputMode>("input");
@@ -199,8 +201,9 @@ function normalizeDataSourceValue(value: string): string {
         :hide-text-when-custom-tool-rendered="hideTextWhenCustomToolRendered" :input-mode="inputMode"
         :show-transcription="showTranscription" @submit-message="handleSubmitMessage" @stop="stop"
         @select-suggestion="handleSelectSuggestion" @add-files="handleAddFiles" @remove-attachment="removeAttachment"
-        @start-transcribe="handleStartTranscribe" @cancel-transcribe="handleCancelTranscribe"
-        @finish-transcribe-with-audio="handleFinishTranscribeWithAudio" />
+        @start-transcribe="showTranscription ? handleStartTranscribe : undefined"
+        @cancel-transcribe="showTranscription ? handleCancelTranscribe : undefined"
+        @finish-transcribe-with-audio="showTranscription ? handleFinishTranscribeWithAudio : undefined" />
     </div>
   </CopilotChatConfigurationProvider>
 </template>

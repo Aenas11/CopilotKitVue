@@ -5,10 +5,23 @@ import {
 } from "./node_modules/@copilotkit/runtime/dist/v2/index.mjs";
 import { createCopilotNodeHandler } from "./node_modules/@copilotkit/runtime/dist/v2/node.mjs";
 import { HttpAgent } from "@ag-ui/client";
+import { TranscriptionServiceOpenAI } from "@copilotkit/voice";
+import OpenAI from "openai";
 
 const endpoint = "/api/copilotkit";
 const port = Number(process.env.RUNTIME_PORT ?? 4000);
 const agentUrl = process.env.AGENT_URL ?? "http://localhost:8000/";
+const openAIApiKey = process.env.OPENAI_API_KEY?.trim();
+
+/**
+ * Mirrors React examples runtime behavior: configure a transcription service
+ * when OPENAI_API_KEY is available; otherwise /transcribe returns 503.
+ */
+const transcriptionService = openAIApiKey
+  ? new TranscriptionServiceOpenAI({
+      openai: new OpenAI({ apiKey: openAIApiKey }),
+    })
+  : undefined;
 
 const runtime = new CopilotSseRuntime({
   agents: {
@@ -16,6 +29,7 @@ const runtime = new CopilotSseRuntime({
       url: agentUrl,
     }),
   },
+  transcriptionService,
 });
 
 const handler = createCopilotRuntimeHandler({
@@ -47,6 +61,13 @@ const server = http.createServer((req, res) => {
 server.listen(port, () => {
   console.log(`[runtime] listening on http://localhost:${port}${endpoint}`);
   console.log(`[runtime] forwarding to agent: ${agentUrl}`);
+  if (transcriptionService) {
+    console.log("[runtime] transcription: enabled (OpenAI whisper-1)");
+  } else {
+    console.log(
+      "[runtime] transcription: disabled (set OPENAI_API_KEY to enable /transcribe)",
+    );
+  }
 });
 
 for (const signal of ["SIGINT", "SIGTERM"]) {

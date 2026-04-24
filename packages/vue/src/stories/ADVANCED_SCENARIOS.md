@@ -82,6 +82,7 @@ Notes:
 - All stories use `StoryRuntimeProvider` and are intended to run with `pnpm --dir ./packages/vue run storybook:dev`.
 - `LiveAgentUseThreads.stories.ts` includes a platform-gated CRUD scenario. Local examples runtime may return `422` for Threads API endpoints; this is expected outside Intelligence platform environments.
 - `LiveAgentUseAttachments.stories.ts` demonstrates the composable-level queue pattern; the base `CopilotChat` component now also supports integrated attachment add/remove/send flow directly in chat input.
+- Technical debt: `LiveAgentAudioRecorder.stories.ts` currently relies on an OpenAI-compatible runtime transcription path. Azure Foundry + Microsoft Agent Framework-native transcription alignment is planned for a follow-up.
 
 ## Shared Live Story Pattern
 

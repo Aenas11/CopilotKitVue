@@ -14,6 +14,10 @@ export const StoryRuntimeProvider = defineComponent({
             type: String,
             default: undefined,
         },
+        forceAudioFileTranscriptionEnabled: {
+            type: Boolean,
+            default: false,
+        },
     },
     setup(props, { slots }) {
         const copilotkit = new CopilotKitCore({
@@ -23,6 +27,21 @@ export const StoryRuntimeProvider = defineComponent({
             properties: undefined,
             agents__unsafe_dev_only: undefined,
         });
+
+        if (props.forceAudioFileTranscriptionEnabled) {
+            const prototypeDescriptor = Object.getOwnPropertyDescriptor(
+                Object.getPrototypeOf(copilotkit),
+                "audioFileTranscriptionEnabled",
+            );
+
+            Object.defineProperty(copilotkit, "audioFileTranscriptionEnabled", {
+                configurable: true,
+                get() {
+                    const runtimeValue = prototypeDescriptor?.get?.call(copilotkit) ?? false;
+                    return runtimeValue || true;
+                },
+            });
+        }
 
         const context: CopilotKitContext = {
             copilotkit,

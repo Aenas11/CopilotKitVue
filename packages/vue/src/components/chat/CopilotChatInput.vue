@@ -6,6 +6,7 @@
 import { ref, computed, watch } from "vue";
 import type { CopilotChatInputMode } from "./CopilotChatAudioRecorder.types";
 import CopilotChatAudioRecorder from "./CopilotChatAudioRecorder.vue";
+import { useCopilotChatConfiguration } from "../../composables/useCopilotChatConfiguration";
 
 const props = withDefaults(
   defineProps<{
@@ -54,6 +55,16 @@ type AudioRecorderHandle = {
 };
 
 const audioRecorderRef = ref<AudioRecorderHandle | null>(null);
+const configuration = useCopilotChatConfiguration();
+
+const toolbarLabels = computed(() => ({
+  startTranscribe:
+    configuration.labels?.chatInputToolbarStartTranscribeButtonLabel ?? "Transcribe",
+  cancelTranscribe:
+    configuration.labels?.chatInputToolbarCancelTranscribeButtonLabel ?? "Cancel",
+  finishTranscribe:
+    configuration.labels?.chatInputToolbarFinishTranscribeButtonLabel ?? "Finish",
+}));
 
 const value = computed({
   get() {
@@ -161,8 +172,9 @@ async function handleFinishTranscribe() {
         :disabled="disabled" :autofocus="autoFocus" rows="1" @keydown="handleKeyDown" @input="autoResize" />
 
       <!-- Mic button — only when transcription is supported -->
-      <button v-if="showTranscription" class="cpk-input__mic" type="button" aria-label="Start voice input"
-        title="Start voice input" @click="emit('startTranscribe')">
+      <button v-if="showTranscription" class="cpk-input__mic cpk-input__toolbar-btn" type="button"
+        :aria-label="toolbarLabels.startTranscribe" :title="toolbarLabels.startTranscribe"
+        @click="emit('startTranscribe')">
         <!-- Mic SVG -->
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -190,10 +202,11 @@ async function handleFinishTranscribe() {
       </button>
     </template>
 
-    <!-- ── Transcribe / processing mode ─────────────────────────────────── -->
-    <template v-else>
+    <!-- ── Transcribe mode ──────────────────────────────────────────────── -->
+    <template v-else-if="mode === 'transcribe'">
       <!-- Cancel button -->
-      <button class="cpk-input__transcribe-cancel" type="button" aria-label="Cancel recording" title="Cancel recording"
+      <button class="cpk-input__transcribe-cancel cpk-input__toolbar-btn" type="button"
+        :aria-label="toolbarLabels.cancelTranscribe" :title="toolbarLabels.cancelTranscribe"
         @click="emit('cancelTranscribe')">
         <!-- X icon -->
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -207,21 +220,33 @@ async function handleFinishTranscribe() {
       <CopilotChatAudioRecorder ref="audioRecorderRef" class="cpk-input__waveform" />
 
       <!-- Finish / processing indicator -->
-      <button v-if="mode === 'transcribe'" class="cpk-input__transcribe-finish" type="button"
-        aria-label="Finish recording" title="Finish recording" @click="handleFinishTranscribe">
+      <button class="cpk-input__transcribe-finish cpk-input__toolbar-btn" type="button"
+        :aria-label="toolbarLabels.finishTranscribe" :title="toolbarLabels.finishTranscribe"
+        @click="handleFinishTranscribe">
         <!-- Check icon -->
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12" />
         </svg>
       </button>
-      <span v-else class="cpk-input__transcribe-spinner" aria-label="Transcribing...">
-        <!-- Loader icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cpk-spin">
-          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-        </svg>
-      </span>
+
+    </template>
+
+    <!-- ── Processing mode ──────────────────────────────────────────────── -->
+    <template v-else>
+      <div class="cpk-input__processing-spacer" aria-hidden="true"></div>
+      <div class="cpk-input__waveform">
+        <div class="cpk-audio-recorder cpk-audio-recorder--processing">
+          <span class="cpk-input__transcribe-spinner" aria-label="Transcribing...">
+            <!-- Loader icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cpk-spin">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+          </span>
+        </div>
+      </div>
+      <div class="cpk-input__processing-spacer" aria-hidden="true"></div>
     </template>
   </div>
 </template>
