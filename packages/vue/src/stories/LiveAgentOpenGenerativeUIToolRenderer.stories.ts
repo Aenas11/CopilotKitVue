@@ -52,7 +52,7 @@ const OGUIToolRendererLiveContent = defineComponent({
         return { payload };
     },
     template: `
-    <div style="display:grid;grid-template-columns:390px minmax(0,1fr);height:100vh;">
+    <div style="display:grid;grid-template-columns:390px minmax(0,1fr);height:100dvh;min-height:100%;overflow:hidden;">
       <aside style="border-right:1px solid #e2e8f0;background:#f8fafc;padding:14px 12px;display:flex;flex-direction:column;gap:10px;">
         <h3 style="margin:0;font-size:15px;">OpenGenerativeUIToolRenderer</h3>
         <p style="margin:0;font-size:12px;color:#475569;line-height:1.45;">

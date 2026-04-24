@@ -3,7 +3,7 @@
  * CopilotChatInput — textarea + send/stop button, with optional transcribe mode.
  * Enter to send, Shift+Enter for newline. Mirrors the React CopilotChatInput.
  */
-import { ref, computed, watch } from "vue";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
 import type { CopilotChatInputMode } from "./CopilotChatAudioRecorder.types";
 import CopilotChatAudioRecorder from "./CopilotChatAudioRecorder.vue";
 import { useCopilotChatConfiguration } from "../../composables/useCopilotChatConfiguration";
@@ -115,8 +115,15 @@ function handleFileInput(event: Event) {
 
 function autoResize(e: Event) {
   const ta = e.target as HTMLTextAreaElement;
+  resizeTextarea(ta);
+}
+
+function resizeTextarea(ta: HTMLTextAreaElement) {
   ta.style.height = "auto";
-  ta.style.height = `${Math.min(ta.scrollHeight, 200)}px`;
+  const maxHeight = 200;
+  const nextHeight = Math.min(ta.scrollHeight, maxHeight);
+  ta.style.height = `${nextHeight}px`;
+  ta.style.overflowY = ta.scrollHeight > maxHeight ? "auto" : "hidden";
 }
 
 // ---------------------------------------------------------------------------
@@ -154,6 +161,25 @@ async function handleFinishTranscribe() {
     }
   }
 }
+
+onMounted(() => {
+  if (textareaRef.value) {
+    resizeTextarea(textareaRef.value);
+  }
+});
+
+watch(
+  () => [value.value, props.placeholder, props.mode],
+  () => {
+    if (props.mode !== "input") return;
+    nextTick(() => {
+      if (textareaRef.value) {
+        resizeTextarea(textareaRef.value);
+      }
+    });
+  },
+  { flush: "post" },
+);
 </script>
 
 <template>

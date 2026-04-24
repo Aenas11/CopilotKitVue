@@ -100,7 +100,7 @@ onMounted(() => scrollToBottom("instant"));
           </slot>
         </div>
 
-        <CopilotChatMessageView :messages="messages" :is-running="isRunning"
+        <CopilotChatMessageView v-else :messages="messages" :is-running="isRunning"
           :hide-text-when-custom-tool-rendered="hideTextWhenCustomToolRendered" />
       </div>
 

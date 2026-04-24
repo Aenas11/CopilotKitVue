@@ -399,7 +399,7 @@
 
 .copilotkit-ogui-renderer__iframe {
   width: 100%;
-  min-height: inherit;
+  height: 220px; /* default; overridden by :style binding once auto-height is measured */
   border: 0;
   display: block;
 }
@@ -705,7 +705,7 @@
   outline: none;
   min-height: 2.5rem;
   max-height: 12rem;
-  overflow-y: auto;
+  overflow-y: hidden;
   transition: border-color 150ms;
 }
 

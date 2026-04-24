@@ -58,20 +58,27 @@ const ThreadCrudContent = defineComponent({
         } = useThreads({ agentId: "my_agent" });
 
         const visible = computed(() => threads.value.filter((item: Thread) => !item.archived));
+        const isPlatformGated = computed(() => {
+            const message = error.value?.message?.toLowerCase() ?? "";
+            return message.includes("422") || message.includes("intelligence") || message.includes("unprocessable");
+        });
 
         const renameFirst = async () => {
+            if (isPlatformGated.value) return;
             const target = visible.value[0];
             if (!target) return;
             await renameThread(target.id, `${target.name ?? "Thread"} (renamed)`);
         };
 
         const archiveFirst = async () => {
+            if (isPlatformGated.value) return;
             const target = visible.value[0];
             if (!target) return;
             await archiveThread(target.id);
         };
 
         const deleteFirst = async () => {
+            if (isPlatformGated.value) return;
             const target = visible.value[0];
             if (!target) return;
             await deleteThread(target.id);
@@ -85,6 +92,7 @@ const ThreadCrudContent = defineComponent({
             hasMoreThreads,
             isFetchingMoreThreads,
             isLoading,
+            isPlatformGated,
             renameFirst,
             visible,
         };
@@ -99,6 +107,13 @@ const ThreadCrudContent = defineComponent({
 
         <div v-if="isLoading" style="font-size:12px;color:#64748b;">Loading threads...</div>
 
+        <div v-else-if="error && isPlatformGated" style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px;line-height:1.45;">
+          Platform-gated response: {{ error.message }}
+          <div style="margin-top:6px;color:#78350f;">
+            CRUD controls are intentionally disabled in local examples runtime; run this against Intelligence platform to validate live mutations.
+          </div>
+        </div>
+
         <div v-else-if="error" style="font-size:12px;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px;line-height:1.45;">
           {{ error.message }}
         </div>
@@ -110,10 +125,10 @@ const ThreadCrudContent = defineComponent({
         </ul>
 
         <div style="display:grid;gap:8px;grid-template-columns:1fr 1fr;">
-          <button type="button" @click="renameFirst">Rename first</button>
-          <button type="button" @click="archiveFirst">Archive first</button>
-          <button type="button" @click="deleteFirst">Delete first</button>
-          <button type="button" :disabled="!hasMoreThreads || isFetchingMoreThreads" @click="fetchMoreThreads">Fetch more</button>
+          <button type="button" :disabled="isPlatformGated" @click="renameFirst">Rename first</button>
+          <button type="button" :disabled="isPlatformGated" @click="archiveFirst">Archive first</button>
+          <button type="button" :disabled="isPlatformGated" @click="deleteFirst">Delete first</button>
+          <button type="button" :disabled="isPlatformGated || !hasMoreThreads || isFetchingMoreThreads" @click="fetchMoreThreads">Fetch more</button>
         </div>
       </aside>
 
