@@ -377,6 +377,7 @@
 }
 
 .copilotkit-ogui-renderer {
+  position: relative;
   border: 1px solid var(--cpk-border);
   border-radius: 0.625rem;
   overflow: hidden;
@@ -385,7 +386,23 @@
 
 .copilotkit-ogui-renderer__iframe {
   width: 100%;
+  min-height: inherit;
   border: 0;
+  display: block;
+}
+
+.copilotkit-ogui-renderer__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: all;
+  background: rgba(255, 255, 255, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copilotkit-ogui-renderer__spinner {
   display: block;
 }
 
