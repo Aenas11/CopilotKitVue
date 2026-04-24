@@ -399,7 +399,8 @@
 
 .copilotkit-ogui-renderer__iframe {
   width: 100%;
-  height: 220px; /* default; overridden by :style binding once auto-height is measured */
+  height: 220px;
+  /* default; overridden by :style binding once auto-height is measured */
   border: 0;
   display: block;
 }
