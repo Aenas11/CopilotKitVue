@@ -301,6 +301,19 @@
   border-radius: 0.375rem;
 }
 
+.copilotkit-attachment__image-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 72px;
+  border-radius: 0.5rem;
+  background: var(--cpk-bg-secondary);
+  color: var(--cpk-text-muted);
+  font-size: 0.8125rem;
+  padding: 0.5rem;
+}
+
 .copilotkit-attachment__audio {
   width: min(220px, 100%);
 }

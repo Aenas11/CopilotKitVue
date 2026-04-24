@@ -94,23 +94,7 @@ export const liveAgentPurposeDecorator: Decorator = (story, context) => {
         },
         template: `
           <div style="position: relative;">
-            <div
-              v-if="showPurpose && !dismissed"
-              style="position: fixed; top: 12px; right: 12px; z-index: 50; max-width: 430px; background: rgba(255, 255, 255, 0.96); border: 1px solid #d1d5db; border-radius: 10px; padding: 10px 12px; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14); font-size: 12px; line-height: 1.45; color: #111827;"
-            >
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
-                <div style="font-weight: 700; color: #1d4ed8;">Scenario Purpose</div>
-                <button
-                  type="button"
-                  aria-label="Dismiss scenario purpose"
-                  @click="dismiss"
-                  style="border: 1px solid #d1d5db; background: #fff; color: #4b5563; border-radius: 6px; cursor: pointer; font-size: 11px; line-height: 1; padding: 4px 6px;"
-                >
-                  Close
-                </button>
-              </div>
-              <div>{{ purposeText }}</div>
-            </div>
+
             <RenderedStory />
           </div>
         `,
